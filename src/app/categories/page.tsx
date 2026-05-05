@@ -4,6 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import type { Category } from "@/lib/types";
 import { CategoryIcon } from "@/components/Icons";
 
+// Cache this page for 1 hour; revalidate in the background on next visit
+export const revalidate = 3600;
+
 // Seed categories shown when Supabase returns nothing (dev fallback)
 const FALLBACK_CATEGORIES: Category[] = [
   { id: "1", name: "Kitchen Equipment", slug: "kitchen-equipment", description: "Commercial cooking equipment for professional kitchens.", image_url: null },

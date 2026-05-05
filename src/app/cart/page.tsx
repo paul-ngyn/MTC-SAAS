@@ -14,7 +14,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-24 text-center">
+      <div className="max-w-3xl mx-auto px-4 py-24 text-center bg-white">
         <div className="flex justify-center mb-6 text-gray-300">
           <svg xmlns="http://www.w3.org/2000/svg" className="w-20 h-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A1 1 0 007 17h11M7 13H5.4M17 17a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
@@ -33,7 +33,7 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-white min-h-screen">
       <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Shopping Cart</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

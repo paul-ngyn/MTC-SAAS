@@ -62,7 +62,7 @@ export default function HomePage() {
 
       {/* Featured Categories */}
       <section className="py-16 px-4 max-w-7xl mx-auto">
-        <h2 className="text-3xl font-extrabold text-white mb-8 text-center">
+        <h2 className="text-3xl font-extrabold text-black mb-8 text-center">
           Shop by Category
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">

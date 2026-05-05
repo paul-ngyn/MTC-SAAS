@@ -4,6 +4,9 @@ import ProductCard from "@/components/ProductCard";
 import type { Category, Product } from "@/lib/types";
 import { notFound } from "next/navigation";
 
+// Cache each category page for 5 minutes
+export const revalidate = 300;
+
 // Demo products shown when Supabase returns nothing (dev fallback)
 function buildFallbackProducts(categoryId: string): Product[] {
   return Array.from({ length: 6 }, (_, i) => ({
