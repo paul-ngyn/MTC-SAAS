@@ -74,9 +74,9 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-500 mb-6">
-        <a href="/" className="hover:text-orange-600">Home</a>
+        <a href="/" className="hover:text-[#1c51a3]">Home</a>
         <span className="mx-2">/</span>
-        <a href="/categories" className="hover:text-orange-600">Categories</a>
+        <a href="/categories" className="hover:text-[#1c51a3]">Categories</a>
         <span className="mx-2">/</span>
         <span className="text-gray-900 font-medium">{category.name}</span>
       </nav>
@@ -105,7 +105,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               url.searchParams.set("page", "1");
               window.location.href = url.toString();
             }}
-            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+            className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#2561bb]"
           >
             <option value="name">Name A–Z</option>
             <option value="price_asc">Price: Low to High</option>
@@ -133,8 +133,8 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               href={`?page=${p}&sort=${sort}`}
               className={`w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-medium transition-colors ${
                 p === pageNum
-                  ? "bg-orange-600 text-white border-orange-600"
-                  : "border-gray-300 text-gray-700 hover:border-orange-400"
+                  ? "bg-[#1c51a3] text-white border-[#1c51a3]"
+                  : "border-gray-300 text-gray-700 hover:border-[#4a7fc4]"
               }`}
             >
               {p}

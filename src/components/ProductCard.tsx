@@ -30,15 +30,17 @@ export default function ProductCard({ product }: Props) {
             className="object-cover hover:scale-105 transition-transform duration-300"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-4xl">
-            📦
+          <div className="w-full h-full flex items-center justify-center text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7m16 0l-8 4-8-4" />
+            </svg>
           </div>
         )}
       </Link>
 
       <div className="flex flex-col flex-1 p-4 gap-2">
         <Link href={`/products/${product.slug}`}>
-          <h3 className="font-semibold text-gray-900 line-clamp-2 hover:text-orange-600 transition-colors">
+          <h3 className="font-semibold text-gray-900 line-clamp-2 hover:text-[#1c51a3] transition-colors">
             {product.name}
           </h3>
         </Link>
@@ -46,7 +48,7 @@ export default function ProductCard({ product }: Props) {
 
         <div className="flex items-center justify-between mt-2">
           <div>
-            <span className="text-lg font-bold text-orange-600">{formatPrice(product.price)}</span>
+            <span className="text-lg font-bold text-[#1c51a3]">{formatPrice(product.price)}</span>
             <span className="text-xs text-gray-400 ml-1">/ {product.unit}</span>
           </div>
           {product.stock > 0 ? (
@@ -59,7 +61,7 @@ export default function ProductCard({ product }: Props) {
         <button
           onClick={() => addItem(product)}
           disabled={product.stock === 0}
-          className="w-full mt-2 py-2 px-4 rounded-lg bg-orange-600 text-white text-sm font-semibold hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full mt-2 py-2 px-4 rounded-lg bg-[#1c51a3] text-white text-sm font-semibold hover:bg-[#163d7d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Add to Cart
         </button>

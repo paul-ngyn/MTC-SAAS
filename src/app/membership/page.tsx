@@ -152,12 +152,12 @@ export default function MembershipPage() {
             key={plan.id}
             className={`relative rounded-2xl border-2 p-8 flex flex-col ${
               plan.highlighted
-                ? "border-orange-500 shadow-xl shadow-orange-100"
+                ? "border-[#2561bb] shadow-xl shadow-[#d4e2f5]"
                 : "border-gray-200 shadow-sm"
             }`}
           >
             {plan.badge && (
-              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-orange-600 text-white text-xs font-bold px-4 py-1 rounded-full">
+              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#1c51a3] text-white text-xs font-bold px-4 py-1 rounded-full">
                 {plan.badge}
               </span>
             )}
@@ -178,7 +178,7 @@ export default function MembershipPage() {
             <ul className="space-y-3 flex-1 mb-8">
               {plan.features.map((feature) => (
                 <li key={feature} className="flex items-start gap-2.5 text-sm text-gray-700">
-                  <CheckIcon className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                  <CheckIcon className="w-5 h-5 text-[#2561bb] flex-shrink-0 mt-0.5" />
                   {feature}
                 </li>
               ))}
@@ -189,7 +189,7 @@ export default function MembershipPage() {
               disabled={!!loading}
               className={`w-full py-3 rounded-xl font-bold text-base transition-colors ${
                 plan.highlighted
-                  ? "bg-orange-600 text-white hover:bg-orange-700"
+                  ? "bg-[#1c51a3] text-white hover:bg-[#163d7d]"
                   : "bg-gray-100 text-gray-900 hover:bg-gray-200"
               } disabled:opacity-60 disabled:cursor-not-allowed`}
             >

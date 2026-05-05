@@ -61,7 +61,11 @@ export default function SignUpPage() {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
         <div className="w-full max-w-md text-center">
-          <div className="text-6xl mb-4">📧</div>
+          <div className="flex justify-center mb-4 text-gray-400">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-3">Check your email</h1>
           <p className="text-gray-500 mb-6">
             We sent a confirmation link to <strong>{form.email}</strong>. Click the
@@ -69,7 +73,7 @@ export default function SignUpPage() {
           </p>
           <Link
             href="/auth/sign-in"
-            className="inline-block px-6 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-colors"
+            className="inline-block px-6 py-3 bg-[#1c51a3] text-white font-bold rounded-lg hover:bg-[#163d7d] transition-colors"
           >
             Back to Sign In
           </Link>
@@ -82,13 +86,13 @@ export default function SignUpPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="text-3xl font-extrabold text-orange-600">
+          <Link href="/" className="text-3xl font-extrabold text-[#1c51a3]">
             MTC Supply Hub
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-4">Create your account</h1>
           <p className="text-gray-500 mt-1">
             Already have an account?{" "}
-            <Link href="/auth/sign-in" className="text-orange-600 font-semibold hover:underline">
+            <Link href="/auth/sign-in" className="text-[#1c51a3] font-semibold hover:underline">
               Sign in
             </Link>
           </p>
@@ -123,7 +127,7 @@ export default function SignUpPage() {
                 required
                 value={form[field.id as keyof typeof form]}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-gray-900"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2561bb] text-gray-900"
                 placeholder={field.placeholder}
               />
             </div>
@@ -132,14 +136,14 @@ export default function SignUpPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-3 bg-[#1c51a3] text-white font-bold rounded-lg hover:bg-[#163d7d] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? "Creating account…" : "Create Account"}
           </button>
 
           <p className="text-xs text-gray-400 text-center">
             By signing up you agree to our{" "}
-            <Link href="/privacy" className="text-orange-600 hover:underline">Privacy Policy</Link>.
+            <Link href="/privacy" className="text-[#1c51a3] hover:underline">Privacy Policy</Link>.
           </p>
         </form>
       </div>

@@ -51,7 +51,7 @@ export default function CheckoutPage() {
       <div className="max-w-2xl mx-auto px-4 py-24 text-center">
         <div className="text-7xl mb-6">🛒</div>
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Your cart is empty</h1>
-        <Link href="/categories" className="px-6 py-3 bg-orange-600 text-white rounded-lg font-bold">
+        <Link href="/categories" className="px-6 py-3 bg-[#1c51a3] text-white rounded-lg font-bold">
           Browse Products
         </Link>
       </div>
@@ -83,7 +83,7 @@ export default function CheckoutPage() {
         </div>
         <div className="px-6 py-4 border-t border-gray-200 flex justify-between font-bold text-lg">
           <span>Total</span>
-          <span className="text-orange-600">{formatPrice(total())}</span>
+          <span className="text-[#1c51a3]">{formatPrice(total())}</span>
         </div>
       </div>
 
@@ -101,14 +101,14 @@ export default function CheckoutPage() {
       <button
         onClick={handleCheckout}
         disabled={loading}
-        className="w-full py-4 bg-orange-600 text-white font-bold text-lg rounded-xl hover:bg-orange-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+        className="w-full py-4 bg-[#1c51a3] text-white font-bold text-lg rounded-xl hover:bg-[#163d7d] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
       >
         {loading ? "Redirecting to Stripe…" : `Pay ${formatPrice(total())}`}
       </button>
 
       <Link
         href="/cart"
-        className="block text-center mt-4 text-sm text-gray-500 hover:text-orange-600 transition-colors"
+        className="block text-center mt-4 text-sm text-gray-500 hover:text-[#1c51a3] transition-colors"
       >
         ← Back to Cart
       </Link>

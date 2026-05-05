@@ -43,7 +43,7 @@ export default function ProductPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1c51a3]" />
       </div>
     );
   }
@@ -55,7 +55,7 @@ export default function ProductPage() {
         <p className="text-gray-500 mb-8">
           This product does not exist or has been removed.
         </p>
-        <Link href="/categories" className="px-6 py-3 bg-orange-600 text-white rounded-lg font-semibold">
+        <Link href="/categories" className="px-6 py-3 bg-[#1c51a3] text-white rounded-lg font-semibold">
           Back to Categories
         </Link>
       </div>
@@ -66,9 +66,9 @@ export default function ProductPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Breadcrumb */}
       <nav className="text-sm text-gray-500 mb-8">
-        <Link href="/" className="hover:text-orange-600">Home</Link>
+        <Link href="/" className="hover:text-[#1c51a3]">Home</Link>
         <span className="mx-2">/</span>
-        <Link href="/categories" className="hover:text-orange-600">Categories</Link>
+        <Link href="/categories" className="hover:text-[#1c51a3]">Categories</Link>
         <span className="mx-2">/</span>
         <span className="text-gray-900 font-medium">{product.name}</span>
       </nav>
@@ -85,8 +85,10 @@ export default function ProductPage() {
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-8xl text-gray-400">
-              📦
+            <div className="w-full h-full flex items-center justify-center text-gray-300">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-32 h-32" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={0.75}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7m16 0l-8 4-8-4" />
+              </svg>
             </div>
           )}
         </div>
@@ -96,7 +98,7 @@ export default function ProductPage() {
           <div>
             <h1 className="text-3xl font-extrabold text-gray-900">{product.name}</h1>
             <div className="flex items-center gap-3 mt-3">
-              <span className="text-3xl font-bold text-orange-600">{formatPrice(product.price)}</span>
+              <span className="text-3xl font-bold text-[#1c51a3]">{formatPrice(product.price)}</span>
               <span className="text-gray-400">/ {product.unit}</span>
             </div>
           </div>
@@ -140,7 +142,7 @@ export default function ProductPage() {
             <button
               onClick={handleAddToCart}
               disabled={product.stock === 0}
-              className="flex-1 py-3 px-6 rounded-lg bg-orange-600 text-white font-bold text-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 py-3 px-6 rounded-lg bg-[#1c51a3] text-white font-bold text-lg hover:bg-[#163d7d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {added ? "✓ Added!" : "Add to Cart"}
             </button>
@@ -148,7 +150,7 @@ export default function ProductPage() {
 
           <Link
             href="/cart"
-            className="text-center py-3 px-6 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:border-orange-400 hover:text-orange-600 transition-colors"
+            className="text-center py-3 px-6 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:border-[#4a7fc4] hover:text-[#1c51a3] transition-colors"
           >
             View Cart
           </Link>

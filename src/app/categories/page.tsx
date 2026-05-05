@@ -2,17 +2,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import type { Category } from "@/lib/types";
-
-const EMOJI_MAP: Record<string, string> = {
-  "kitchen-equipment": "🍳",
-  disposables: "🥡",
-  smallwares: "🔪",
-  refrigeration: "❄️",
-  "cleaning-supplies": "🧹",
-  "food-storage": "📦",
-  beverages: "🥤",
-  bakery: "🥖",
-};
+import { CategoryIcon } from "@/components/Icons";
 
 // Seed categories shown when Supabase returns nothing (dev fallback)
 const FALLBACK_CATEGORIES: Category[] = [
@@ -39,11 +29,13 @@ export default async function CategoriesPage() {
           <Link
             key={cat.id}
             href={`/categories/${cat.slug}`}
-            className="group flex items-start gap-4 p-6 bg-white rounded-xl border border-gray-200 hover:border-orange-400 hover:shadow-md transition-all"
+            className="group flex items-start gap-4 p-6 bg-white rounded-xl border border-gray-200 hover:border-[#4a7fc4] hover:shadow-md transition-all"
           >
-            <span className="text-5xl">{EMOJI_MAP[cat.slug] ?? "📦"}</span>
+            <span className="w-12 h-12 flex items-center justify-center rounded-lg bg-gray-100 text-gray-700 flex-shrink-0">
+              <CategoryIcon slug={cat.slug} className="w-7 h-7" />
+            </span>
             <div>
-              <h2 className="text-lg font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
+              <h2 className="text-lg font-bold text-gray-900 group-hover:text-[#1c51a3] transition-colors">
                 {cat.name}
               </h2>
               {cat.description && (

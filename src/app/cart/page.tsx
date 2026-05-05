@@ -15,12 +15,16 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-24 text-center">
-        <div className="text-7xl mb-6">🛒</div>
+        <div className="flex justify-center mb-6 text-gray-300">
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-20 h-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A1 1 0 007 17h11M7 13H5.4M17 17a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+          </svg>
+        </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-3">Your cart is empty</h1>
         <p className="text-gray-500 mb-8">Add some products to get started.</p>
         <Link
           href="/categories"
-          className="inline-block px-8 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-colors"
+          className="inline-block px-8 py-3 bg-[#1c51a3] text-white font-bold rounded-lg hover:bg-[#163d7d] transition-colors"
         >
           Browse Products
         </Link>
@@ -57,7 +61,7 @@ export default function CartPage() {
               <div className="flex-1 min-w-0">
                 <Link
                   href={`/products/${item.product.slug}`}
-                  className="font-semibold text-gray-900 hover:text-orange-600 line-clamp-2"
+                  className="font-semibold text-gray-900 hover:text-[#1c51a3] line-clamp-2"
                 >
                   {item.product.name}
                 </Link>
@@ -128,13 +132,13 @@ export default function CartPage() {
 
           <Link
             href="/checkout"
-            className="block w-full mt-6 py-3 bg-orange-600 text-white font-bold text-center rounded-lg hover:bg-orange-700 transition-colors"
+            className="block w-full mt-6 py-3 bg-[#1c51a3] text-white font-bold text-center rounded-lg hover:bg-[#163d7d] transition-colors"
           >
             Proceed to Checkout
           </Link>
           <Link
             href="/categories"
-            className="block w-full mt-3 py-2.5 text-sm text-center text-gray-500 hover:text-orange-600 transition-colors"
+            className="block w-full mt-3 py-2.5 text-sm text-center text-gray-500 hover:text-[#1c51a3] transition-colors"
           >
             ← Continue Shopping
           </Link>
