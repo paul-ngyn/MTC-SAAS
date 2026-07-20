@@ -2,7 +2,7 @@
 // Receives and verifies Stripe webhook events
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import Stripe from "stripe";
 
 // Disable body parsing so we can verify the raw Stripe signature
@@ -28,33 +28,35 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
-  const supabase = await createClient();
+  // Stripe's signature check above is the auth boundary for this route —
+  // there is no browser session, so we need the service-role client to
+  // write past RLS instead of the cookie-based anon client.
+  const supabase = createAdminClient();
 
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
 
       if (session.mode === "subscription") {
-        // Update user membership tier in Supabase
+        const userId = session.metadata?.user_id ?? session.client_reference_id;
+        const tier = session.metadata?.tier;
         const customerId = session.customer as string;
-        const subscriptionId = session.subscription as string;
 
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-        const priceId = subscription.items.data[0]?.price.id;
+        if (!userId || !tier) {
+          console.error(
+            "[stripe webhook] subscription session missing user_id/tier metadata",
+            session.id
+          );
+          break;
+        }
 
-        // Map priceId → tier name
-        const tierMap: Record<string, string> = {
-          [process.env.STRIPE_PRICE_BASIC ?? ""]: "basic",
-          [process.env.STRIPE_PRICE_PRO ?? ""]: "pro",
-          [process.env.STRIPE_PRICE_ENTERPRISE ?? ""]: "enterprise",
-        };
-        const tier = tierMap[priceId] ?? "basic";
+        const { error } = await supabase
+          .from("profiles")
+          .update({ membership_tier: tier, stripe_customer_id: customerId })
+          .eq("id", userId);
 
-        if (session.customer_email) {
-          await supabase
-            .from("profiles")
-            .update({ membership_tier: tier, stripe_customer_id: customerId })
-            .eq("email", session.customer_email);
+        if (error) {
+          console.error("[stripe webhook] failed to update profile tier", error);
         }
       }
       break;
@@ -64,10 +66,14 @@ export async function POST(req: NextRequest) {
       const subscription = event.data.object as Stripe.Subscription;
       const customerId = subscription.customer as string;
 
-      await supabase
+      const { error } = await supabase
         .from("profiles")
         .update({ membership_tier: null })
         .eq("stripe_customer_id", customerId);
+
+      if (error) {
+        console.error("[stripe webhook] failed to clear profile tier", error);
+      }
       break;
     }
 
