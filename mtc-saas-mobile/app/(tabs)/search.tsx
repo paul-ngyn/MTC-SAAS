@@ -1,6 +1,6 @@
 // app/(tabs)/search.tsx – Search products
 
-import { useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,29 +10,37 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/lib/supabase';
-import ProductCard from '@/components/ProductCard';
+import ProductRow from '@/components/ProductRow';
+import { colors } from '@/lib/theme';
 import type { Product } from '@/lib/types';
 
 export default function SearchScreen() {
-  const [query, setQuery] = useState('');
+  const { q: initialQ } = useLocalSearchParams<{ q?: string }>();
+  const [query, setQuery] = useState(initialQ ?? '');
   const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  const handleSearch = async () => {
-    const q = query.trim();
-    if (!q) return;
+  const runSearch = useCallback(async (q: string) => {
+    if (!q.trim()) return;
     setLoading(true);
     setSearched(true);
     const { data } = await supabase
       .from('products')
       .select('*')
-      .ilike('name', `%${q}%`)
+      .ilike('name', `%${q.trim()}%`)
       .limit(30);
     setResults(data ?? []);
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (initialQ) runSearch(initialQ);
+  }, [initialQ, runSearch]);
+
+  const handleSearch = () => runSearch(query);
 
   return (
     <View style={styles.container}>
@@ -40,8 +48,8 @@ export default function SearchScreen() {
       <View style={styles.searchRow}>
         <TextInput
           style={styles.input}
-          placeholder="Search products..."
-          placeholderTextColor="#9ca3af"
+          placeholder="Search 1,600+ products, SKUs..."
+          placeholderTextColor={colors.mutedLight}
           returnKeyType="search"
           value={query}
           onChangeText={setQuery}
@@ -54,7 +62,7 @@ export default function SearchScreen() {
 
       {loading && (
         <View style={styles.center}>
-          <ActivityIndicator color="#1c51a3" />
+          <ActivityIndicator color={colors.navy} />
         </View>
       )}
 
@@ -73,39 +81,41 @@ export default function SearchScreen() {
       <FlatList
         data={results}
         keyExtractor={(item) => item.id}
-        numColumns={2}
         contentContainerStyle={styles.list}
-        columnWrapperStyle={styles.row}
-        renderItem={({ item }) => <ProductCard product={item} />}
+        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+        renderItem={({ item }) => <ProductRow product={item} />}
+        removeClippedSubviews
+        initialNumToRender={8}
+        windowSize={7}
+        maxToRenderPerBatch={8}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
-  searchRow: { flexDirection: 'row', padding: 12, gap: 8, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+  container: { flex: 1, backgroundColor: colors.bg },
+  searchRow: { flexDirection: 'row', padding: 12, gap: 8, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
   input: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
+    borderColor: colors.border,
+    borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#111827',
-    backgroundColor: '#f9fafb',
+    color: colors.ink,
+    backgroundColor: colors.bg,
   },
   searchBtn: {
-    backgroundColor: '#1c51a3',
+    backgroundColor: colors.navy,
     paddingHorizontal: 18,
-    borderRadius: 8,
+    borderRadius: 6,
     justifyContent: 'center',
   },
-  searchBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  searchBtnText: { color: '#fff', fontWeight: '800', fontSize: 13, letterSpacing: 0.3 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  emptyText: { color: '#6b7280', fontSize: 15, textAlign: 'center' },
-  hintText: { color: '#9ca3af', fontSize: 15 },
+  emptyText: { color: colors.muted, fontSize: 15, textAlign: 'center' },
+  hintText: { color: colors.mutedLight, fontSize: 15 },
   list: { padding: 12, paddingBottom: 32 },
-  row: { gap: 8, marginBottom: 8 },
 });

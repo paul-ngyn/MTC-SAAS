@@ -9,21 +9,25 @@ mtc-saas-mobile/
 ├── app/
 │   ├── _layout.tsx          # Root layout + session guard
 │   ├── (auth)/              # Sign-in / Sign-up (unprotected)
-│   ├── (tabs)/              # Bottom tab navigator
-│   │   ├── index.tsx        # Home
-│   │   ├── categories.tsx   # All categories
-│   │   ├── search.tsx       # Product search
-│   │   ├── cart.tsx         # Shopping cart + checkout
-│   │   └── account.tsx      # Profile + membership
-│   ├── categories/[slug].tsx  # Products in a category
-│   ├── products/[slug].tsx    # Product detail
+│   ├── (tabs)/              # Bottom tab navigator: Home / Browse / Orders / Account
+│   │   ├── index.tsx        # Home (search, MTC+ banner, categories, reorder shortcuts)
+│   │   ├── categories.tsx   # Browse — all categories
+│   │   ├── search.tsx       # Product search (routable, not a tab)
+│   │   ├── cart.tsx         # Cart + checkout (routable, not a tab)
+│   │   ├── orders.tsx       # Order history
+│   │   └── account.tsx      # Profile, MTC+ status, auto-reorder schedules
+│   ├── categories/[slug].tsx  # Browse: products in a category, with filter chips
+│   ├── products/[slug].tsx    # Product detail with tiered pricing
 │   └── membership.tsx         # Membership plans
 ├── components/
-│   ├── ProductCard.tsx
+│   ├── ProductRow.tsx       # Horizontal product list item (Browse, reorder shortcuts)
 │   └── CategoryCard.tsx
 └── lib/
     ├── supabase.ts          # Supabase client
     ├── cart-store.ts        # Zustand cart (AsyncStorage)
+    ├── pricing.ts           # Tiered wholesale pricing
+    ├── reorder-store.ts     # Persisted auto-reorder schedules
+    ├── theme.ts             # Shared design tokens
     └── types.ts             # Shared domain types
 ```
 

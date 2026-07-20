@@ -1,4 +1,4 @@
-// app/(tabs)/cart.tsx – Shopping cart screen
+// app/(tabs)/cart.tsx – Cart & checkout, with tiered bulk pricing
 
 import {
   View,
@@ -11,20 +11,28 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as WebBrowser from 'expo-web-browser';
 import { useCartStore } from '@/lib/cart-store';
-import { useState } from 'react';
+import { memo, useMemo, useState } from 'react';
+import { colors } from '@/lib/theme';
+import { getEffectiveUnitPrice, getLineTotal, getLineSavings, getNextTier } from '@/lib/pricing';
 import type { CartItem } from '@/lib/types';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
+const FREE_FREIGHT_THRESHOLD = 25000; // $250, matches the MTC+ member banner
 
 function formatPrice(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
-function CartItemRow({ item }: { item: CartItem }) {
-  const { updateQuantity, removeItem } = useCartStore();
+const CartItemRow = memo(function CartItemRow({ item }: { item: CartItem }) {
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const removeItem = useCartStore((s) => s.removeItem);
   const { product, quantity } = item;
+  const savings = getLineSavings(product.price, product.unit, quantity);
+  const nextTier = getNextTier(product.price, product.unit, quantity);
 
   return (
     <View style={styles.itemRow}>
@@ -37,7 +45,6 @@ function CartItemRow({ item }: { item: CartItem }) {
       )}
       <View style={styles.itemInfo}>
         <Text style={styles.itemName} numberOfLines={2}>{product.name}</Text>
-        <Text style={styles.itemPrice}>{formatPrice(product.price)} / {product.unit}</Text>
         <View style={styles.qtyRow}>
           <TouchableOpacity
             style={styles.qtyBtn}
@@ -56,16 +63,39 @@ function CartItemRow({ item }: { item: CartItem }) {
             <Text style={styles.removeBtnText}>Remove</Text>
           </TouchableOpacity>
         </View>
+        {savings > 0 ? (
+          <Text style={styles.tierNote}>
+            Bulk tier — {formatPrice(savings)} off / {product.unit}
+          </Text>
+        ) : nextTier ? (
+          <Text style={styles.tierHint}>
+            Add {nextTier.minQty - quantity} more for {formatPrice(nextTier.unitPrice)}/{product.unit}
+          </Text>
+        ) : null}
       </View>
-      <Text style={styles.itemTotal}>{formatPrice(product.price * quantity)}</Text>
+      <Text style={styles.itemTotal}>{formatPrice(getLineTotal(product.price, product.unit, quantity))}</Text>
     </View>
   );
-}
+});
 
 export default function CartScreen() {
-  const { items, total, clearCart } = useCartStore();
+  const items = useCartStore((s) => s.items);
+  const clearCart = useCartStore((s) => s.clearCart);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const itemCount = useMemo(() => items.reduce((sum, item) => sum + item.quantity, 0), [items]);
+  const listSubtotal = useMemo(
+    () => items.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+    [items]
+  );
+  const tieredTotal = useMemo(
+    () => items.reduce((sum, item) => sum + getLineTotal(item.product.price, item.product.unit, item.quantity), 0),
+    [items]
+  );
+  const bulkSavings = listSubtotal - tieredTotal;
+  const freightFree = tieredTotal >= FREE_FREIGHT_THRESHOLD;
+  const total = tieredTotal; // freight calculated at checkout when not free
 
   const handleCheckout = async () => {
     setLoading(true);
@@ -77,7 +107,7 @@ export default function CartScreen() {
           items: items.map(({ product, quantity }) => ({
             id: product.id,
             name: product.name,
-            price: product.price,
+            price: getEffectiveUnitPrice(product.price, product.unit, quantity),
             quantity,
             image: product.image_url,
           })),
@@ -106,101 +136,148 @@ export default function CartScreen() {
     }
   };
 
-  if (items.length === 0) {
-    return (
-      <View style={styles.empty}>
-        <Text style={styles.emptyIcon}>🛒</Text>
-        <Text style={styles.emptyTitle}>Your cart is empty</Text>
-        <Text style={styles.emptyDesc}>Browse categories to add products.</Text>
-        <TouchableOpacity style={styles.browseBtn} onPress={() => router.push('/(tabs)/categories')}>
-          <Text style={styles.browseBtnText}>Browse Categories</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.product.id}
-        renderItem={({ item }) => <CartItemRow item={item} />}
-        contentContainerStyle={styles.list}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
-      {/* Summary */}
-      <View style={styles.summary}>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} items)</Text>
-          <Text style={styles.summaryValue}>{formatPrice(total())}</Text>
-        </View>
-        <TouchableOpacity
-          style={[styles.checkoutBtn, loading && styles.checkoutBtnDisabled]}
-          onPress={handleCheckout}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.checkoutBtnText}>Proceed to Checkout</Text>
-          )}
+      <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
+        <TouchableOpacity onPress={() => router.back()} hitSlop={8}>
+          <Ionicons name="chevron-back" size={24} color={colors.ink} />
         </TouchableOpacity>
+        <Text style={styles.topBarTitle}>Cart · {itemCount} item{itemCount === 1 ? '' : 's'}</Text>
+        <View style={{ width: 24 }} />
       </View>
+
+      {items.length === 0 ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyIcon}>🛒</Text>
+          <Text style={styles.emptyTitle}>Your cart is empty</Text>
+          <Text style={styles.emptyDesc}>Browse categories to add products.</Text>
+          <TouchableOpacity style={styles.browseBtn} onPress={() => router.push('/(tabs)/categories')}>
+            <Text style={styles.browseBtnText}>Browse Categories</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          <FlatList
+            data={items}
+            keyExtractor={(item) => item.product.id}
+            renderItem={({ item }) => <CartItemRow item={item} />}
+            contentContainerStyle={styles.list}
+            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            removeClippedSubviews
+            initialNumToRender={8}
+            windowSize={7}
+            maxToRenderPerBatch={8}
+          />
+          {/* Summary */}
+          <View style={styles.summary}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal</Text>
+              <Text style={styles.summaryValue}>{formatPrice(listSubtotal)}</Text>
+            </View>
+            {bulkSavings > 0 && (
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabelSavings}>Bulk-tier savings</Text>
+                <Text style={styles.summaryValueSavings}>−{formatPrice(bulkSavings)}</Text>
+              </View>
+            )}
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Freight</Text>
+              <Text style={styles.summaryValue}>{freightFree ? 'Free' : 'At checkout'}</Text>
+            </View>
+            <View style={[styles.summaryRow, styles.totalRow]}>
+              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalValue}>{formatPrice(total)}</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.checkoutBtn, loading && styles.checkoutBtnDisabled]}
+              onPress={handleCheckout}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.checkoutBtnText}>Checkout</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
+  container: { flex: 1, backgroundColor: colors.bg },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+  },
+  topBarTitle: { fontSize: 15, fontWeight: '800', letterSpacing: 0.3, textTransform: 'uppercase', color: colors.ink },
   list: { padding: 12, paddingBottom: 8 },
-  separator: { height: 1, backgroundColor: '#e5e7eb', marginVertical: 4 },
+  separator: { height: 1, backgroundColor: colors.border, marginVertical: 4 },
   itemRow: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    backgroundColor: colors.surface,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.border,
     padding: 12,
     alignItems: 'flex-start',
   },
-  itemImage: { width: 60, height: 60, borderRadius: 8, marginRight: 12 },
-  itemImagePlaceholder: { backgroundColor: '#f3f4f6', justifyContent: 'center', alignItems: 'center' },
+  itemImage: { width: 60, height: 60, borderRadius: 6, marginRight: 12 },
+  itemImagePlaceholder: { backgroundColor: colors.tint, justifyContent: 'center', alignItems: 'center' },
   itemImagePlaceholderText: { fontSize: 22 },
   itemInfo: { flex: 1 },
-  itemName: { fontSize: 14, fontWeight: '600', color: '#111827', marginBottom: 3 },
-  itemPrice: { fontSize: 12, color: '#6b7280', marginBottom: 8 },
+  itemName: { fontSize: 14, fontWeight: '600', color: colors.ink, marginBottom: 8 },
   qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   qtyBtn: {
     width: 28, height: 28,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: 6,
     justifyContent: 'center',
     alignItems: 'center',
   },
   qtyBtnText: { fontSize: 16, fontWeight: '600', color: '#374151' },
-  qtyValue: { fontSize: 15, fontWeight: '700', color: '#111827', minWidth: 20, textAlign: 'center' },
+  qtyValue: { fontSize: 15, fontWeight: '700', color: colors.ink, minWidth: 20, textAlign: 'center' },
   removeBtn: { marginLeft: 8 },
-  removeBtnText: { fontSize: 12, color: '#ef4444', fontWeight: '600' },
-  itemTotal: { fontSize: 14, fontWeight: '700', color: '#1c51a3', marginLeft: 8 },
+  removeBtnText: { fontSize: 12, color: colors.danger, fontWeight: '600' },
+  tierNote: { fontSize: 11, fontWeight: '700', color: colors.navy, marginTop: 6 },
+  tierHint: { fontSize: 11, color: colors.muted, marginTop: 6 },
+  itemTotal: { fontSize: 14, fontWeight: '800', color: colors.navy, marginLeft: 8 },
   summary: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: colors.border,
     padding: 20,
   },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
-  summaryLabel: { fontSize: 15, color: '#374151' },
-  summaryValue: { fontSize: 16, fontWeight: '800', color: '#111827' },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  summaryLabel: { fontSize: 14, color: '#374151' },
+  summaryValue: { fontSize: 14, fontWeight: '700', color: colors.ink },
+  summaryLabelSavings: { fontSize: 14, color: colors.navy, fontWeight: '600' },
+  summaryValueSavings: { fontSize: 14, fontWeight: '700', color: colors.navy },
+  totalRow: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 10, marginTop: 2, marginBottom: 16 },
+  totalLabel: { fontSize: 16, fontWeight: '800', color: colors.ink },
+  totalValue: { fontSize: 18, fontWeight: '900', color: colors.ink },
   checkoutBtn: {
-    backgroundColor: '#1c51a3',
-    borderRadius: 10,
+    backgroundColor: colors.navy,
+    borderRadius: 6,
     paddingVertical: 15,
     alignItems: 'center',
   },
   checkoutBtnDisabled: { opacity: 0.6 },
-  checkoutBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  checkoutBtnText: { color: '#fff', fontWeight: '800', fontSize: 15, letterSpacing: 0.3 },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   emptyIcon: { fontSize: 56, marginBottom: 16 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: '#111827', marginBottom: 8 },
-  emptyDesc: { fontSize: 14, color: '#6b7280', marginBottom: 24, textAlign: 'center' },
-  browseBtn: { backgroundColor: '#1c51a3', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
-  browseBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  emptyTitle: { fontSize: 20, fontWeight: '900', color: colors.ink, marginBottom: 8 },
+  emptyDesc: { fontSize: 14, color: colors.muted, marginBottom: 24, textAlign: 'center' },
+  browseBtn: { backgroundColor: colors.navy, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 6 },
+  browseBtnText: { color: '#fff', fontWeight: '800', fontSize: 14, letterSpacing: 0.3 },
 });

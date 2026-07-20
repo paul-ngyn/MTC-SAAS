@@ -5,8 +5,10 @@ import { Stack, router, useSegments } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { supabase } from '@/lib/supabase';
+import HeaderBackButton from '@/components/HeaderBackButton';
 
 export default function RootLayout() {
   const [session, setSession] = useState<Session | null>(null);
@@ -47,24 +49,26 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{ headerTintColor: '#1c51a3', headerTitleStyle: { fontWeight: '700' } }}>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="categories/[slug]"
-          options={{ title: 'Products', headerBackTitle: 'Back' }}
-        />
-        <Stack.Screen
-          name="products/[slug]"
-          options={{ title: 'Product Details', headerBackTitle: 'Back' }}
-        />
-        <Stack.Screen
-          name="membership"
-          options={{ title: 'Membership Plans', headerBackTitle: 'Back' }}
-        />
-      </Stack>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <StatusBar style="dark" />
+        <Stack screenOptions={{ headerTintColor: '#1c51a3', headerTitleStyle: { fontWeight: '700' } }}>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="categories/[slug]"
+            options={{ title: 'Products', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
+          />
+          <Stack.Screen
+            name="products/[slug]"
+            options={{ title: 'Product Details', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
+          />
+          <Stack.Screen
+            name="membership"
+            options={{ title: 'Membership Plans', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
+          />
+        </Stack>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }

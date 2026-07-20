@@ -1,94 +1,136 @@
 // app/(tabs)/index.tsx – Home screen
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-  StyleSheet,
+  TextInput,
   FlatList,
+  StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
 import CategoryCard from '@/components/CategoryCard';
-import type { Category } from '@/lib/types';
+import ProductRow from '@/components/ProductRow';
+import { colors } from '@/lib/theme';
+import { useCartStore } from '@/lib/cart-store';
+import type { Category, Product, Profile } from '@/lib/types';
 
-const VALUE_PROPS = [
-  { icon: '💰', title: 'Wholesale Pricing', desc: 'Member-exclusive bulk rates on thousands of SKUs.' },
-  { icon: '🚚', title: 'Fast Fulfillment', desc: 'Same-day processing on orders placed before 2 PM EST.' },
-  { icon: '🌐', title: 'Distributor Network', desc: 'Vetted suppliers and trusted distributors nationwide.' },
+const DEMO_CATEGORIES: Category[] = [
+  { id: '1', name: 'Kitchen Equipment', slug: 'kitchen-equipment', description: null, image_url: null },
+  { id: '2', name: 'Disposables', slug: 'disposables', description: null, image_url: null },
+  { id: '3', name: 'Smallwares', slug: 'smallwares', description: null, image_url: null },
+  { id: '4', name: 'Refrigeration', slug: 'refrigeration', description: null, image_url: null },
+];
+
+const DEMO_REORDER_PRODUCTS: Product[] = [
+  { id: 'demo-1', name: '32 oz Round Container with Lid, Case of 150', slug: 'demo-1', description: null, price: 4299, image_url: null, category_id: '2', stock: 100, unit: 'case', sku: 'TD-C32-150', brand_code: 'TD' },
+  { id: 'demo-2', name: '18" Food Film Wrap, 2000 ft Roll', slug: 'demo-2', description: null, price: 1429, image_url: null, category_id: '2', stock: 60, unit: 'roll', sku: 'MTC-F18-2K', brand_code: 'MTC' },
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const itemCount = useCartStore((s) => s.itemCount());
   const [categories, setCategories] = useState<Category[]>([]);
+  const [reorderProducts, setReorderProducts] = useState<Product[]>(DEMO_REORDER_PRODUCTS);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
-    supabase
-      .from('categories')
-      .select('*')
-      .limit(6)
-      .then(({ data }) => {
-        if (data && data.length > 0) setCategories(data);
-        else {
-          // Fallback demo categories
-          setCategories([
-            { id: '1', name: 'Kitchen Equipment', slug: 'kitchen-equipment', description: null, image_url: null },
-            { id: '2', name: 'Disposables', slug: 'disposables', description: null, image_url: null },
-            { id: '3', name: 'Smallwares', slug: 'smallwares', description: null, image_url: null },
-            { id: '4', name: 'Refrigeration', slug: 'refrigeration', description: null, image_url: null },
-            { id: '5', name: 'Cleaning Supplies', slug: 'cleaning-supplies', description: null, image_url: null },
-            { id: '6', name: 'Food Storage', slug: 'food-storage', description: null, image_url: null },
-          ]);
+    supabase.from('categories').select('*').limit(4).then(({ data }) => {
+      setCategories(data && data.length > 0 ? data : DEMO_CATEGORIES);
+    });
+
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data: profileData } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+      if (profileData) setProfile(profileData);
+
+      // Reorder shortcuts: most recent distinct products from this user's past orders.
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      if (orders && orders.length > 0) {
+        const { data: items } = await supabase
+          .from('order_items')
+          .select('product_id, products(*)')
+          .in('order_id', orders.map((o) => o.id))
+          .limit(10);
+        const seen = new Set<string>();
+        const products: Product[] = [];
+        for (const item of items ?? []) {
+          const p = (item as unknown as { products: Product | null }).products;
+          if (p && !seen.has(p.id)) {
+            seen.add(p.id);
+            products.push(p);
+          }
+          if (products.length >= 2) break;
         }
-      });
+        if (products.length > 0) setReorderProducts(products);
+      }
+    });
   }, []);
+
+  const handleSearch = useCallback(() => {
+    const q = query.trim();
+    if (q) router.push(`/(tabs)/search?q=${encodeURIComponent(q)}`);
+  }, [query, router]);
+
+  const isMember = !!profile?.membership_tier;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Hero */}
-      <View style={styles.hero}>
-        <Text style={styles.heroTitle}>The Central Hub for Restaurant Supply Distributors</Text>
-        <Text style={styles.heroSub}>
-          Wholesale pricing, bulk ordering, and membership discounts — all in one place.
-        </Text>
-        <View style={styles.heroActions}>
-          <TouchableOpacity
-            style={styles.heroBtnPrimary}
-            onPress={() => router.push('/(tabs)/categories')}
-          >
-            <Text style={styles.heroBtnPrimaryText}>Browse Categories</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.heroBtnSecondary}
-            onPress={() => router.push('/membership')}
-          >
-            <Text style={styles.heroBtnSecondaryText}>View Membership</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Value Props */}
-      <View style={styles.section}>
-        {VALUE_PROPS.map((vp) => (
-          <View key={vp.title} style={styles.valueProp}>
-            <Text style={styles.valuePropIcon}>{vp.icon}</Text>
-            <View style={styles.valuePropText}>
-              <Text style={styles.valuePropTitle}>{vp.title}</Text>
-              <Text style={styles.valuePropDesc}>{vp.desc}</Text>
+      {/* Top bar */}
+      <View style={[styles.topBar, { paddingTop: insets.top + 12 }]}>
+        <Text style={styles.logo}>MTC</Text>
+        <TouchableOpacity style={styles.cartBtn} onPress={() => router.push('/(tabs)/cart')}>
+          <Ionicons name="cart-outline" size={24} color={colors.ink} />
+          {itemCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{itemCount > 99 ? '99+' : itemCount}</Text>
             </View>
-          </View>
-        ))}
-      </View>
-
-      {/* Featured Categories */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Featured Categories</Text>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/categories')}>
-          <Text style={styles.seeAll}>See all</Text>
+          )}
         </TouchableOpacity>
       </View>
+
+      {/* Search */}
+      <View style={styles.searchRow}>
+        <Ionicons name="search-outline" size={16} color={colors.mutedLight} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search products, SKUs..."
+          placeholderTextColor={colors.mutedLight}
+          returnKeyType="search"
+          value={query}
+          onChangeText={setQuery}
+          onSubmitEditing={handleSearch}
+        />
+      </View>
+
+      {/* Membership banner */}
+      <TouchableOpacity
+        style={[styles.memberBanner, !isMember && styles.memberBannerUpsell]}
+        onPress={() => router.push('/membership')}
+        activeOpacity={0.85}
+      >
+        <Text style={[styles.memberEyebrow, !isMember && styles.memberEyebrowUpsell]}>
+          {isMember ? 'MTC+ MEMBER' : 'GO MTC+'}
+        </Text>
+        <Text style={[styles.memberTitle, !isMember && styles.memberTitleUpsell]}>
+          {isMember ? 'Free freight over $250 — Active' : 'Unlock free freight & tiered pricing'}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Shop by category */}
+      <Text style={styles.sectionLabel}>Shop by category</Text>
       <FlatList
         data={categories}
         keyExtractor={(item) => item.id}
@@ -97,65 +139,79 @@ export default function HomeScreen() {
         renderItem={({ item }) => <CategoryCard category={item} />}
         scrollEnabled={false}
       />
+
+      {/* Reorder in one tap */}
+      <Text style={styles.sectionLabel}>Reorder in one tap</Text>
+      <View style={styles.reorderList}>
+        {reorderProducts.map((p) => (
+          <ProductRow key={p.id} product={p} />
+        ))}
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
+  container: { flex: 1, backgroundColor: colors.bg },
   content: { paddingBottom: 32 },
-  hero: {
-    backgroundColor: '#1c51a3',
-    padding: 28,
-    paddingTop: 48,
-  },
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#fff',
-    lineHeight: 30,
-    marginBottom: 10,
-  },
-  heroSub: {
-    fontSize: 14,
-    color: '#d4e2f5',
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-  heroActions: { flexDirection: 'row', gap: 10 },
-  heroBtnPrimary: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 8,
-    flex: 1,
-    alignItems: 'center',
-  },
-  heroBtnPrimaryText: { color: '#163d7d', fontWeight: '700', fontSize: 13 },
-  heroBtnSecondary: {
-    borderWidth: 2,
-    borderColor: '#fff',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 8,
-    flex: 1,
-    alignItems: 'center',
-  },
-  heroBtnSecondaryText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  section: { backgroundColor: '#fff', padding: 20, marginBottom: 8 },
-  valueProp: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 16 },
-  valuePropIcon: { fontSize: 24, marginRight: 14, marginTop: 2 },
-  valuePropText: { flex: 1 },
-  valuePropTitle: { fontWeight: '700', fontSize: 15, color: '#111827', marginBottom: 2 },
-  valuePropDesc: { fontSize: 13, color: '#6b7280', lineHeight: 18 },
-  sectionHeader: {
+  topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingBottom: 12,
   },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#111827' },
-  seeAll: { fontSize: 14, color: '#1c51a3', fontWeight: '600' },
-  categoryRow: { paddingHorizontal: 12, gap: 8, marginBottom: 8 },
+  logo: { fontSize: 22, fontWeight: '900', letterSpacing: 0.5, color: colors.navy },
+  cartBtn: { padding: 4 },
+  cartBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    backgroundColor: colors.navy,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    paddingHorizontal: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cartBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 6,
+    marginHorizontal: 16,
+    marginTop: 4,
+    paddingHorizontal: 12,
+  },
+  searchIcon: { marginRight: 6 },
+  searchInput: { flex: 1, paddingVertical: 10, fontSize: 14, color: colors.ink },
+  memberBanner: {
+    backgroundColor: colors.navyDark,
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 16,
+  },
+  memberBannerUpsell: { backgroundColor: colors.tint },
+  memberEyebrow: { fontSize: 10, fontWeight: '800', letterSpacing: 1, color: '#9db6e8' },
+  memberEyebrowUpsell: { color: colors.navy },
+  memberTitle: { fontSize: 15, fontWeight: '800', color: '#fff', marginTop: 4 },
+  memberTitleUpsell: { color: colors.navy },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: colors.muted,
+    marginHorizontal: 16,
+    marginTop: 24,
+    marginBottom: 10,
+  },
+  categoryRow: { paddingHorizontal: 16, gap: 8, marginBottom: 8 },
+  reorderList: { paddingHorizontal: 16, gap: 8 },
 });

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import CategoryCard from '@/components/CategoryCard';
+import { colors } from '@/lib/theme';
 import type { Category } from '@/lib/types';
 
 const DEMO_CATEGORIES: Category[] = [
@@ -39,7 +40,7 @@ export default function CategoriesScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#1c51a3" />
+        <ActivityIndicator size="large" color={colors.navy} />
       </View>
     );
   }
@@ -52,6 +53,10 @@ export default function CategoriesScreen() {
       contentContainerStyle={styles.list}
       columnWrapperStyle={styles.row}
       renderItem={({ item }) => <CategoryCard category={item} />}
+      removeClippedSubviews
+      initialNumToRender={8}
+      windowSize={7}
+      maxToRenderPerBatch={8}
       ListHeaderComponent={
         <View style={styles.header}>
           <Text style={styles.headerTitle}>All Categories</Text>
@@ -67,6 +72,6 @@ const styles = StyleSheet.create({
   list: { padding: 12, paddingBottom: 32 },
   row: { gap: 8, marginBottom: 8 },
   header: { paddingHorizontal: 4, paddingTop: 8, paddingBottom: 16 },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: '#111827' },
-  headerSub: { fontSize: 13, color: '#6b7280', marginTop: 4 },
+  headerTitle: { fontSize: 24, fontWeight: '900', letterSpacing: 0.2, color: colors.ink },
+  headerSub: { fontSize: 13, color: colors.muted, marginTop: 4 },
 });

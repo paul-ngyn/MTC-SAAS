@@ -3,33 +3,22 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { Category } from '@/lib/types';
-
-// Simple color palette for category cards without images
-const BG_COLORS = ['#dbeafe', '#dcfce7', '#fef9c3', '#fce7f3', '#ede9fe', '#ffedd5'];
-
-function hashIndex(str: string, len: number): number {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % len;
-  return h;
-}
+import { colors } from '@/lib/theme';
 
 export default function CategoryCard({ category }: { category: Category }) {
   const router = useRouter();
-  const bg = BG_COLORS[hashIndex(category.slug, BG_COLORS.length)];
 
   return (
     <TouchableOpacity
-      style={[styles.card, { backgroundColor: bg }]}
+      style={styles.card}
       onPress={() => router.push(`/categories/${category.slug}`)}
-      activeOpacity={0.85}
+      activeOpacity={0.7}
     >
-      <View style={styles.inner}>
-        <Text style={styles.name}>{category.name}</Text>
-        {category.description && (
-          <Text style={styles.desc} numberOfLines={2}>{category.description}</Text>
-        )}
-        <Text style={styles.arrow}>Browse →</Text>
-      </View>
+      <Text style={styles.name} numberOfLines={1}>{category.name}</Text>
+      {category.description ? (
+        <Text style={styles.desc} numberOfLines={2}>{category.description}</Text>
+      ) : null}
+      <Text style={styles.arrow}>Browse →</Text>
     </TouchableOpacity>
   );
 }
@@ -37,12 +26,22 @@ export default function CategoryCard({ category }: { category: Category }) {
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-    minHeight: 100,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 6,
+    padding: 14,
+    minHeight: 96,
+    justifyContent: 'space-between',
   },
-  inner: { padding: 14, flex: 1, justifyContent: 'space-between' },
-  name: { fontSize: 14, fontWeight: '700', color: '#111827', marginBottom: 4 },
-  desc: { fontSize: 11, color: '#374151', lineHeight: 15, flex: 1, marginBottom: 6 },
-  arrow: { fontSize: 12, fontWeight: '600', color: '#1c51a3' },
+  name: {
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
+    color: colors.ink,
+    marginBottom: 4,
+  },
+  desc: { fontSize: 11, color: colors.muted, lineHeight: 15, flex: 1, marginBottom: 6 },
+  arrow: { fontSize: 11, fontWeight: '700', color: colors.navy },
 });
