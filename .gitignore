@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+# nested dependency dirs anywhere in the tree (e.g. a stray mobile/ scaffold)
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -23,6 +25,12 @@
 # misc
 .DS_Store
 *.pem
+
+# editor
+.vscode/
+
+# expo caches (nested apps)
+**/.expo/
 
 # debug
 npm-debug.log*

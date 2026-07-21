@@ -1,49 +1,31 @@
 // app/(tabs)/categories.tsx – Categories list
 
 import { useEffect, useState } from 'react';
-import {
-  FlatList,
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { FlatList, View, Text, StyleSheet } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import CategoryCard from '@/components/CategoryCard';
 import { colors } from '@/lib/theme';
+import { DEMO_CATEGORIES } from '@/lib/catalog';
 import type { Category } from '@/lib/types';
 
-const DEMO_CATEGORIES: Category[] = [
-  { id: '1', name: 'Kitchen Equipment', slug: 'kitchen-equipment', description: 'Commercial ranges, fryers, and ovens.', image_url: null },
-  { id: '2', name: 'Disposables', slug: 'disposables', description: 'Cups, containers, and packaging.', image_url: null },
-  { id: '3', name: 'Smallwares', slug: 'smallwares', description: 'Pots, pans, and utensils.', image_url: null },
-  { id: '4', name: 'Refrigeration', slug: 'refrigeration', description: 'Coolers, freezers, and reach-ins.', image_url: null },
-  { id: '5', name: 'Cleaning Supplies', slug: 'cleaning-supplies', description: 'Chemicals, mops, and brooms.', image_url: null },
-  { id: '6', name: 'Food Storage', slug: 'food-storage', description: 'Containers, shelving, and wraps.', image_url: null },
-];
-
 export default function CategoriesScreen() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Seed from demo data so the grid renders instantly; live data overrides.
+  const [categories, setCategories] = useState<Category[]>(DEMO_CATEGORIES);
 
   useEffect(() => {
-    supabase
-      .from('categories')
-      .select('*')
-      .order('name')
-      .then(({ data }) => {
-        setCategories(data && data.length > 0 ? data : DEMO_CATEGORIES);
-        setLoading(false);
-      });
+    let active = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from('categories').select('*').order('name');
+        if (active && data && data.length > 0) setCategories(data);
+      } catch {
+        /* keep demo data */
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
-
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.navy} />
-      </View>
-    );
-  }
 
   return (
     <FlatList

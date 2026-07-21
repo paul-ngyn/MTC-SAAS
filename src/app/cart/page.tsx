@@ -1,147 +1,197 @@
-// src/app/cart/page.tsx – Shopping cart
+// src/app/cart/page.tsx – Shopping cart (tiered pricing + MTC+ freight)
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { useCartStore } from "@/lib/cart-store";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import { useCartStore } from "@/lib/cart-store";
+import { formatPrice } from "@/lib/catalog";
+import {
+  getEffectiveUnitPrice,
+  getLineTotal,
+  getLineSavings,
+  getTierForQty,
+} from "@/lib/pricing";
+
+// MTC+ members ship free over this threshold (see design).
+const FREE_FREIGHT_THRESHOLD = 50000; // $500 in cents
+const FLAT_FREIGHT = 3500; // $35 estimate under threshold
 
 export default function CartPage() {
-  const { items, removeItem, updateQuantity, total, clearCart } = useCartStore();
-
-  const formatPrice = (cents: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
+  const { items, removeItem, updateQuantity, clearCart } = useCartStore();
 
   if (items.length === 0) {
     return (
-      <div className="max-w-3xl mx-auto px-4 py-24 text-center bg-white">
-        <div className="flex justify-center mb-6 text-gray-300">
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-20 h-20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.35 2.7A1 1 0 007 17h11M7 13H5.4M17 17a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
-          </svg>
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">Your cart is empty</h1>
+      <div className="max-w-3xl mx-auto px-4 py-24 text-center">
+        <h1 className="font-display text-3xl uppercase text-gray-900 mb-3">
+          Your cart is empty
+        </h1>
         <p className="text-gray-500 mb-8">Add some products to get started.</p>
         <Link
           href="/categories"
-          className="inline-block px-8 py-3 bg-[#1c51a3] text-white font-bold rounded-lg hover:bg-[#163d7d] transition-colors"
+          className="inline-block px-8 py-3 bg-navy text-white font-bold hover:bg-navy-dark transition-colors"
         >
-          Browse Products
+          Browse the catalog
         </Link>
       </div>
     );
   }
 
+  const listSubtotal = items.reduce(
+    (sum, i) => sum + i.product.price * i.quantity,
+    0
+  );
+  const bulkSavings = items.reduce(
+    (sum, i) => sum + getLineSavings(i.product.price, i.product.unit, i.quantity),
+    0
+  );
+  const subtotal = listSubtotal - bulkSavings;
+  const freeFreight = subtotal >= FREE_FREIGHT_THRESHOLD;
+  const freight = freeFreight ? 0 : FLAT_FREIGHT;
+  const total = subtotal + freight;
+  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-white min-h-screen">
-      <h1 className="text-3xl font-extrabold text-gray-900 mb-8">Shopping Cart</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="flex items-baseline gap-3 mb-8">
+        <h1 className="font-display text-3xl uppercase text-gray-900">Cart</h1>
+        <span className="text-sm text-gray-500">{itemCount} items</span>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Cart Items */}
-        <div className="lg:col-span-2 space-y-4">
-          {items.map((item) => (
-            <div
-              key={item.product.id}
-              className="flex items-start gap-4 bg-white p-4 rounded-xl border border-gray-200 shadow-sm"
-            >
-              {/* Product image */}
-              <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
-                {item.product.image_url ? (
-                  <Image
-                    src={item.product.image_url}
-                    alt={item.product.name}
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
-                )}
-              </div>
+        {/* Line items */}
+        <div className="lg:col-span-2 border border-gray-200 divide-y divide-gray-100">
+          {items.map((item) => {
+            const { product, quantity } = item;
+            const unitPrice = getEffectiveUnitPrice(
+              product.price,
+              product.unit,
+              quantity
+            );
+            const lineTotal = getLineTotal(product.price, product.unit, quantity);
+            const tier = getTierForQty(product.price, product.unit, quantity);
+            const discounted = unitPrice < product.price;
+            const perUnitOff = product.price - unitPrice;
 
-              <div className="flex-1 min-w-0">
-                <Link
-                  href={`/products/${item.product.slug}`}
-                  className="font-semibold text-gray-900 hover:text-[#1c51a3] line-clamp-2"
-                >
-                  {item.product.name}
-                </Link>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  {formatPrice(item.product.price)} / {item.product.unit}
-                </p>
+            return (
+              <div key={product.id} className="flex items-start gap-4 p-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    {product.brand_code && (
+                      <span className="text-[10px] font-bold tracking-wide uppercase text-gray-500 bg-gray-100 border border-gray-200 px-1.5 py-0.5">
+                        {product.brand_code}
+                      </span>
+                    )}
+                    <Link
+                      href={`/products/${product.slug}`}
+                      className="font-bold text-sm text-gray-900 hover:text-navy line-clamp-1"
+                    >
+                      {product.name}
+                    </Link>
+                  </div>
 
-                {/* Qty controls */}
-                <div className="flex items-center gap-3 mt-3">
-                  <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                  {/* Qty stepper */}
+                  <div className="flex items-center gap-3 mt-3">
+                    <div className="flex items-center border border-gray-300">
+                      <button
+                        onClick={() =>
+                          updateQuantity(product.id, quantity - 1)
+                        }
+                        aria-label="Decrease"
+                        className="px-2.5 py-1 font-bold text-gray-500 hover:bg-gray-100"
+                      >
+                        −
+                      </button>
+                      <span className="px-3 py-1 font-semibold text-gray-900 border-x border-gray-300 text-sm tabular-nums">
+                        {quantity}
+                      </span>
+                      <button
+                        onClick={() =>
+                          updateQuantity(product.id, quantity + 1)
+                        }
+                        aria-label="Increase"
+                        className="px-2.5 py-1 font-bold text-gray-500 hover:bg-gray-100"
+                      >
+                        +
+                      </button>
+                    </div>
+                    {discounted && (
+                      <span className="text-xs text-navy font-medium">
+                        Bulk tier — {formatPrice(perUnitOff)} off / {product.unit}
+                      </span>
+                    )}
                     <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                      className="px-2.5 py-1 font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                      onClick={() => removeItem(product.id)}
+                      className="ml-auto p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                      aria-label="Remove"
                     >
-                      −
-                    </button>
-                    <span className="px-3 py-1 font-semibold text-gray-900 border-x border-gray-300 text-sm">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                      className="px-2.5 py-1 font-bold text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
-                      +
+                      <TrashIcon className="w-5 h-5" />
                     </button>
                   </div>
-                  <button
-                    onClick={() => removeItem(item.product.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                    aria-label="Remove"
-                  >
-                    <TrashIcon className="w-5 h-5" />
-                  </button>
+                  <p className="mt-1 text-[11px] text-gray-400">
+                    {tier.label} · {formatPrice(unitPrice)} / {product.unit}
+                  </p>
+                </div>
+
+                <div className="text-right font-bold text-gray-900 whitespace-nowrap tabular-nums">
+                  {formatPrice(lineTotal)}
                 </div>
               </div>
-
-              <div className="text-right font-bold text-gray-900 whitespace-nowrap">
-                {formatPrice(item.product.price * item.quantity)}
-              </div>
-            </div>
-          ))}
-
-          <button
-            onClick={clearCart}
-            className="text-sm text-gray-400 hover:text-red-500 transition-colors"
-          >
-            Clear cart
-          </button>
+            );
+          })}
         </div>
 
-        {/* Order Summary */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 h-fit sticky top-20">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Order Summary</h2>
-
-          <div className="space-y-2 text-sm">
-            {items.map((item) => (
-              <div key={item.product.id} className="flex justify-between text-gray-600">
-                <span className="line-clamp-1 flex-1 mr-2">{item.product.name} × {item.quantity}</span>
-                <span className="whitespace-nowrap">{formatPrice(item.product.price * item.quantity)}</span>
-              </div>
-            ))}
-            <div className="border-t border-gray-200 pt-3 mt-3 flex justify-between font-bold text-gray-900 text-base">
+        {/* Summary */}
+        <div className="border border-gray-200 p-6 h-fit lg:sticky lg:top-24">
+          <div className="space-y-2.5 text-sm">
+            <div className="flex justify-between text-gray-600">
               <span>Subtotal</span>
-              <span>{formatPrice(total())}</span>
+              <span className="tabular-nums">{formatPrice(subtotal)}</span>
             </div>
-            <p className="text-xs text-gray-400">Taxes and shipping calculated at checkout.</p>
+            {bulkSavings > 0 && (
+              <div className="flex justify-between text-navy">
+                <span>Bulk-tier savings</span>
+                <span className="tabular-nums">
+                  −{formatPrice(bulkSavings)}
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between text-gray-600">
+              <span>Freight (MTC+)</span>
+              <span className="tabular-nums">
+                {freeFreight ? "Free" : formatPrice(freight)}
+              </span>
+            </div>
+            {!freeFreight && (
+              <p className="text-[11px] text-gray-400">
+                Free freight over {formatPrice(FREE_FREIGHT_THRESHOLD)} with MTC+.
+              </p>
+            )}
+            <div className="border-t border-gray-200 pt-3 mt-3 flex justify-between font-bold text-gray-900 text-base">
+              <span>Total</span>
+              <span className="tabular-nums">{formatPrice(total)}</span>
+            </div>
           </div>
 
           <Link
             href="/checkout"
-            className="block w-full mt-6 py-3 bg-[#1c51a3] text-white font-bold text-center rounded-lg hover:bg-[#163d7d] transition-colors"
+            className="block w-full mt-6 py-3 bg-navy text-white font-bold text-center hover:bg-navy-dark transition-colors"
           >
-            Proceed to Checkout
+            Checkout
           </Link>
-          <Link
-            href="/categories"
-            className="block w-full mt-3 py-2.5 text-sm text-center text-gray-500 hover:text-[#1c51a3] transition-colors"
-          >
-            ← Continue Shopping
-          </Link>
+          <div className="mt-3 flex items-center justify-between text-xs">
+            <Link
+              href="/categories"
+              className="text-gray-500 hover:text-navy transition-colors"
+            >
+              ← Continue shopping
+            </Link>
+            <button
+              onClick={clearCart}
+              className="text-gray-400 hover:text-red-500 transition-colors"
+            >
+              Clear cart
+            </button>
+          </div>
         </div>
       </div>
     </div>

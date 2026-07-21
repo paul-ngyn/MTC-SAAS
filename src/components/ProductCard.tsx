@@ -3,7 +3,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { PhotoIcon } from "@heroicons/react/24/outline";
 import { useCartStore } from "@/lib/cart-store";
+import { formatPrice } from "@/lib/catalog";
 import type { Product } from "@/lib/types";
 
 interface Props {
@@ -12,58 +14,77 @@ interface Props {
 
 export default function ProductCard({ product }: Props) {
   const addItem = useCartStore((s) => s.addItem);
-
-  const formatPrice = (cents: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-      cents / 100
-    );
+  const soldOut = product.stock === 0;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
-      <Link href={`/products/${product.slug}`} className="block relative aspect-video overflow-hidden bg-gray-100">
-        {product.image_url ? (
-          <Image
-            src={product.image_url}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            className="object-cover hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7m16 0l-8 4-8-4" />
-            </svg>
-          </div>
-        )}
+    <div className="flex flex-col bg-white border border-gray-200 hover:border-navy/40 hover:shadow-sm transition-all">
+      {/* Photo placeholder */}
+      <Link
+        href={`/products/${product.slug}`}
+        className="block m-3 mb-0"
+      >
+        <div className="relative aspect-[4/3] border border-dashed border-tint-border bg-tint/60 flex flex-col items-center justify-center gap-1 text-navy overflow-hidden">
+          {product.image_url ? (
+            <Image
+              src={product.image_url}
+              alt={product.name}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              className="object-cover"
+            />
+          ) : (
+            <>
+              <PhotoIcon className="w-7 h-7 text-navy/50" />
+              <span className="text-xs font-semibold">Product photo</span>
+            </>
+          )}
+        </div>
       </Link>
 
-      <div className="flex flex-col flex-1 p-4 gap-2">
-        <Link href={`/products/${product.slug}`}>
-          <h3 className="font-semibold text-gray-900 line-clamp-2 hover:text-[#1c51a3] transition-colors">
-            {product.name}
-          </h3>
-        </Link>
-        <p className="text-sm text-gray-500 line-clamp-2 flex-1">{product.description}</p>
-
-        <div className="flex items-center justify-between mt-2">
-          <div>
-            <span className="text-lg font-bold text-[#1c51a3]">{formatPrice(product.price)}</span>
-            <span className="text-xs text-gray-400 ml-1">/ {product.unit}</span>
-          </div>
-          {product.stock > 0 ? (
-            <span className="text-xs text-green-600 font-medium">In Stock</span>
+      <div className="flex flex-col flex-1 p-3 gap-2">
+        {/* Brand tag + SKU */}
+        <div className="flex items-center justify-between">
+          {product.brand_code ? (
+            <span className="text-[10px] font-bold tracking-wide uppercase text-gray-600 bg-gray-100 border border-gray-200 px-1.5 py-0.5">
+              {product.brand_code}
+            </span>
           ) : (
-            <span className="text-xs text-red-500 font-medium">Out of Stock</span>
+            <span />
+          )}
+          {product.sku && (
+            <span className="text-[11px] font-medium text-gray-400 tabular-nums">
+              {product.sku}
+            </span>
           )}
         </div>
 
+        {/* Name */}
+        <Link href={`/products/${product.slug}`}>
+          <h3 className="text-sm font-bold text-gray-900 leading-snug line-clamp-2 hover:text-navy transition-colors min-h-[2.5rem]">
+            {product.name}
+          </h3>
+        </Link>
+
+        {/* Price */}
+        <div className="mt-1">
+          <span className="text-lg font-extrabold text-navy">
+            {formatPrice(product.price)}
+          </span>
+          <span className="text-xs text-gray-400">
+            {" "}/ {product.unit}
+            {product.bulk_price != null && (
+              <> · bulk from {formatPrice(product.bulk_price)}</>
+            )}
+          </span>
+        </div>
+
+        {/* Add to cart */}
         <button
           onClick={() => addItem(product)}
-          disabled={product.stock === 0}
-          className="w-full mt-2 py-2 px-4 rounded-lg bg-[#1c51a3] text-white text-sm font-semibold hover:bg-[#163d7d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          disabled={soldOut}
+          className="w-full mt-2 py-2.5 bg-navy text-white text-sm font-bold hover:bg-navy-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          Add to Cart
+          {soldOut ? "Out of stock" : "Add to cart"}
         </button>
       </div>
     </div>

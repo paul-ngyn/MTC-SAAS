@@ -6,14 +6,22 @@ import {
   Text,
   FlatList,
   StyleSheet,
-  ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import ProductRow from '@/components/ProductRow';
 import { colors } from '@/lib/theme';
+import { getDemoProductsForCategory } from '@/lib/catalog';
 import type { Category, Product } from '@/lib/types';
+
+function sortProducts(list: Product[], sort: SortKey): Product[] {
+  const copy = [...list];
+  if (sort === 'price_asc') copy.sort((a, b) => a.price - b.price);
+  else if (sort === 'price_desc') copy.sort((a, b) => b.price - a.price);
+  else copy.sort((a, b) => a.name.localeCompare(b.name));
+  return copy;
+}
 
 type SortKey = 'name' | 'price_asc' | 'price_desc';
 const SORT_CYCLE: SortKey[] = ['name', 'price_asc', 'price_desc'];
@@ -22,51 +30,66 @@ const SORT_LABEL: Record<SortKey, string> = { name: 'Name', price_asc: 'Price â†
 export default function CategoryProductsScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const navigation = useNavigation();
+  // Seed synchronously from demo data so the screen renders instantly even when
+  // Supabase is unreachable (it's being wired up separately). Live data, if it
+  // arrives, overrides below.
   const [category, setCategory] = useState<Category | null>(null);
-  const [categoryId, setCategoryId] = useState<string | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<Product[]>(() =>
+    sortProducts(getDemoProductsForCategory(slug ?? ''), 'name')
+  );
+  const [isLive, setIsLive] = useState(false);
   const [sort, setSort] = useState<SortKey>('name');
   const [inStockOnly, setInStockOnly] = useState(false);
   const [brandFilter, setBrandFilter] = useState<string | null>(null);
 
+  // Set the header title from the slug immediately.
   useEffect(() => {
     if (!slug) return;
-    supabase
-      .from('categories')
-      .select('*')
-      .eq('slug', slug)
-      .single()
-      .then(({ data }) => {
-        const cat: Category = data ?? {
-          id: 'fallback',
-          name: slug.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
-          slug,
-          description: null,
-          image_url: null,
-        };
-        setCategoryId(data?.id ?? 'fallback');
-        setCategory(cat);
-        navigation.setOptions({ title: cat.name.toUpperCase() });
-      });
-  }, [slug]);
+    const name = slug.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    navigation.setOptions({ title: name.toUpperCase() });
+  }, [slug, navigation]);
 
+  // Try Supabase in the background; override demo data only if it returns rows.
   useEffect(() => {
-    if (!categoryId) return;
-    setLoading(true);
+    if (!slug) return;
+    let active = true;
+    (async () => {
+      try {
+        const { data: cat } = await supabase
+          .from('categories')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+        if (active && cat) setCategory(cat);
 
-    let query = supabase.from('products').select('*').eq('category_id', categoryId);
-    if (sort === 'name') query = query.order('name');
-    else if (sort === 'price_asc') query = query.order('price', { ascending: true });
-    else query = query.order('price', { ascending: false });
+        const categoryId = cat?.id;
+        if (!categoryId) return;
 
-    query
-      .limit(50)
-      .then(({ data }) => {
-        setProducts(data ?? []);
-        setLoading(false);
-      });
-  }, [categoryId, sort]);
+        let query = supabase.from('products').select('*').eq('category_id', categoryId);
+        if (sort === 'price_asc') query = query.order('price', { ascending: true });
+        else if (sort === 'price_desc') query = query.order('price', { ascending: false });
+        else query = query.order('name');
+
+        const { data } = await query.limit(50);
+        if (active && data && data.length > 0) {
+          setProducts(data);
+          setIsLive(true);
+        }
+      } catch {
+        /* keep demo data */
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [slug, sort]);
+
+  // Re-sort demo data locally when the sort changes (live data is server-sorted).
+  useEffect(() => {
+    if (!isLive) {
+      setProducts(sortProducts(getDemoProductsForCategory(slug ?? ''), sort));
+    }
+  }, [sort, slug, isLive]);
 
   const brands = useMemo(
     () => [...new Set(products.map((p) => p.brand_code).filter((b): b is string => !!b))],
@@ -113,11 +136,7 @@ export default function CategoryProductsScreen() {
         </TouchableOpacity>
       </View>
 
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.navy} />
-        </View>
-      ) : (
+      {(
         <FlatList
           data={filtered}
           keyExtractor={(item) => item.id}

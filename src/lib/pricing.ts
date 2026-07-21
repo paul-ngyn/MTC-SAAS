@@ -1,9 +1,9 @@
-// lib/pricing.ts – Tiered wholesale pricing (case-quantity discounts)
+// src/lib/pricing.ts – Tiered wholesale pricing (case-quantity discounts)
 //
-// Every product gets the same three-tier discount schedule off its list
-// price: 1-9 units at list, 10-49 at 10% off, 50+ at 20% off. There is no
-// per-product tier data in the backend, so this is a deterministic function
-// of price rather than stored data.
+// Mirrors mtc-saas-mobile/lib/pricing.ts so web and mobile compute identical
+// tiers. Every product gets the same three-tier schedule off its list price:
+// 1-9 units at list, 10-49 at 10% off, 50+ at 20% off. Deterministic function
+// of price rather than stored per-product data.
 
 export type PriceTier = {
   minQty: number;
@@ -19,7 +19,8 @@ const TIER_BREAKS = [
 ];
 
 export function getTiers(unitPrice: number, unit: string): PriceTier[] {
-  const plural = unit === 'each' || unit.endsWith('s') ? unit : `${unit}s`;
+  const plural =
+    unit === "each" || unit.endsWith("s") ? unit : `${unit}s`;
   return TIER_BREAKS.map(({ minQty, maxQty, discount }) => ({
     minQty,
     maxQty,
@@ -28,25 +29,45 @@ export function getTiers(unitPrice: number, unit: string): PriceTier[] {
   }));
 }
 
-export function getTierForQty(unitPrice: number, unit: string, qty: number): PriceTier {
+export function getTierForQty(
+  unitPrice: number,
+  unit: string,
+  qty: number
+): PriceTier {
   const tiers = getTiers(unitPrice, unit);
   return [...tiers].reverse().find((t) => qty >= t.minQty) ?? tiers[0];
 }
 
-export function getEffectiveUnitPrice(unitPrice: number, unit: string, qty: number): number {
+export function getEffectiveUnitPrice(
+  unitPrice: number,
+  unit: string,
+  qty: number
+): number {
   return getTierForQty(unitPrice, unit, qty).unitPrice;
 }
 
-export function getLineTotal(unitPrice: number, unit: string, qty: number): number {
+export function getLineTotal(
+  unitPrice: number,
+  unit: string,
+  qty: number
+): number {
   return getEffectiveUnitPrice(unitPrice, unit, qty) * qty;
 }
 
-export function getLineSavings(unitPrice: number, unit: string, qty: number): number {
+export function getLineSavings(
+  unitPrice: number,
+  unit: string,
+  qty: number
+): number {
   return unitPrice * qty - getLineTotal(unitPrice, unit, qty);
 }
 
 // Next tier up, if any — used for "Add N more for $X/unit" upsell hints.
-export function getNextTier(unitPrice: number, unit: string, qty: number): PriceTier | null {
+export function getNextTier(
+  unitPrice: number,
+  unit: string,
+  qty: number
+): PriceTier | null {
   const tiers = getTiers(unitPrice, unit);
   return tiers.find((t) => t.minQty > qty) ?? null;
 }

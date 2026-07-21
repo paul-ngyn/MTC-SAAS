@@ -8,13 +8,13 @@ import {
   ScrollView,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
 import { useCartStore } from '@/lib/cart-store';
-import { getTiers, getTierForQty, getLineTotal } from '@/lib/pricing';
+import { getTiers, getTierForQty, getLineTotal, getLineSavings } from '@/lib/pricing';
+import { getDemoProduct } from '@/lib/catalog';
 import type { Product } from '@/lib/types';
 
 function formatPrice(cents: number) {
@@ -26,21 +26,32 @@ export default function ProductDetailScreen() {
   const navigation = useNavigation();
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Seed synchronously from demo data so the screen renders instantly even when
+  // Supabase is unreachable (being wired up separately); live data overrides.
+  const [product, setProduct] = useState<Product | null>(() =>
+    slug ? getDemoProduct(slug) : null
+  );
   const [qty, setQty] = useState(1);
 
   useEffect(() => {
     if (!slug) return;
-    supabase
-      .from('products')
-      .select('*')
-      .eq('slug', slug)
-      .single()
-      .then(({ data }) => {
-        setProduct(data ?? null);
-        setLoading(false);
-      });
+    setProduct(getDemoProduct(slug));
+    let active = true;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select('*')
+          .eq('slug', slug)
+          .single();
+        if (active && data) setProduct(data);
+      } catch {
+        /* keep demo data */
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, [slug]);
 
   useLayoutEffect(() => {
@@ -56,14 +67,6 @@ export default function ProductDetailScreen() {
     router.back();
   }, [addItem, product, qty, router]);
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.navy} />
-      </View>
-    );
-  }
-
   if (!product) {
     return (
       <View style={styles.center}>
@@ -74,6 +77,10 @@ export default function ProductDetailScreen() {
 
   const tiers = getTiers(product.price, product.unit);
   const activeTier = getTierForQty(product.price, product.unit, qty);
+  const lineTotal = getLineTotal(product.price, product.unit, qty);
+  const savings = getLineSavings(product.price, product.unit, qty);
+  const unitLabel =
+    qty === 1 || product.unit === 'each' ? product.unit : `${product.unit}s`;
   const inStock = product.stock > 0;
 
   return (
@@ -114,6 +121,12 @@ export default function ProductDetailScreen() {
           );
         })}
       </View>
+
+      <Text style={styles.savingsNote}>
+        At {qty} {unitLabel}:{' '}
+        <Text style={styles.savingsTotal}>{formatPrice(lineTotal)}</Text>
+        {savings > 0 && ` — saving ${formatPrice(savings)} vs. single-unit`}
+      </Text>
 
       <View style={styles.qtyRow}>
         <TouchableOpacity style={styles.qtyBtn} onPress={() => setQty((q) => Math.max(1, q - 1))}>
@@ -189,6 +202,8 @@ const styles = StyleSheet.create({
   tierLabelActive: { fontWeight: '800', color: colors.navy },
   tierPrice: { fontSize: 14, fontWeight: '700', color: colors.ink },
   tierPriceActive: { color: colors.navy, fontWeight: '900' },
+  savingsNote: { fontSize: 13, color: colors.muted, marginTop: 12 },
+  savingsTotal: { fontWeight: '800', color: colors.navy },
   qtyRow: { flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 20, alignSelf: 'flex-start' },
   qtyBtn: {
     width: 40, height: 40,

@@ -13,11 +13,14 @@ export type Product = {
   name: string;
   slug: string;
   description: string | null;
-  price: number; // in cents
+  price: number; // list price, in cents
   image_url: string | null;
   category_id: string;
   stock: number;
   unit: string; // e.g. "case", "each", "lb"
+  sku?: string; // e.g. "TD-C32-150"
+  brand_code?: string; // e.g. "TD", "MB", "HD"
+  bulk_price?: number; // lowest tier "bulk from" price, in cents
 };
 
 export type CartItem = {

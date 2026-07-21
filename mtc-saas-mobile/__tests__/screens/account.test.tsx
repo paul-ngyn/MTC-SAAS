@@ -39,6 +39,8 @@ jest.mock('@/lib/supabase', () => ({
       return mockMakeChain({ data: null });
     },
     auth: {
+      getSession: () =>
+        Promise.resolve({ data: { session: mockUser ? { user: mockUser } : null } }),
       getUser: () => Promise.resolve({ data: { user: mockUser } }),
       signOut: () => Promise.resolve({ error: null }),
     },
@@ -50,6 +52,13 @@ describe('Account screen — membership status', () => {
     useReorderStore.setState({ schedules: [] });
     mockUser = { id: 'u1', email: 'owner@maplebistro.com' };
     mockProfile = null;
+  });
+
+  it('shows a sign-in prompt for a guest (no session)', async () => {
+    mockUser = null;
+    await render(<AccountScreen />);
+    await waitFor(() => expect(screen.getByText('Sign in to your account')).toBeTruthy());
+    expect(screen.getByText('Sign in')).toBeTruthy();
   });
 
   it('shows "No active plan" and an upgrade prompt when there is no membership', async () => {

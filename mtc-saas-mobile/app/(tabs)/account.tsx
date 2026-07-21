@@ -51,7 +51,18 @@ export default function AccountScreen() {
   const skipNext = useReorderStore((s) => s.skipNext);
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    let active = true;
+    (async () => {
+      // Use the local session (no network round-trip) so a guest — or an
+      // unreachable Supabase while it's being wired up — doesn't hang the screen.
+      let user = null;
+      try {
+        const { data } = await supabase.auth.getSession();
+        user = data.session?.user ?? null;
+      } catch {
+        user = null;
+      }
+      if (!active) return;
       if (!user) {
         setLoading(false);
         return;
@@ -61,6 +72,7 @@ export default function AccountScreen() {
         .select('*')
         .eq('id', user.id)
         .single();
+      if (!active) return;
       setProfile(
         data ?? {
           id: user.id,
@@ -88,7 +100,10 @@ export default function AccountScreen() {
       }
 
       setLoading(false);
-    });
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleSignOut = async () => {
@@ -114,6 +129,30 @@ export default function AccountScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color={colors.navy} />
+      </View>
+    );
+  }
+
+  // Guest state — browsable without an account; prompt to sign in for the rest.
+  if (!profile) {
+    return (
+      <View style={styles.guest}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarInitial}>?</Text>
+        </View>
+        <Text style={styles.guestTitle}>Sign in to your account</Text>
+        <Text style={styles.guestDesc}>
+          Track orders, manage MTC+ membership, and set up auto-reorders.
+        </Text>
+        <TouchableOpacity
+          style={styles.guestBtn}
+          onPress={() => router.push('/(auth)/sign-in')}
+        >
+          <Text style={styles.guestBtnText}>Sign in</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/membership')}>
+          <Text style={styles.guestLink}>Explore MTC+ membership →</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -251,6 +290,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   content: { paddingBottom: 40 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  guest: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
+  guestTitle: { fontSize: 20, fontWeight: '900', color: colors.ink, marginTop: 16 },
+  guestDesc: { fontSize: 14, color: colors.muted, textAlign: 'center', marginTop: 8, marginBottom: 20, lineHeight: 20 },
+  guestBtn: { backgroundColor: colors.navy, paddingHorizontal: 32, paddingVertical: 13, borderRadius: 6 },
+  guestBtnText: { color: '#fff', fontWeight: '800', fontSize: 15, letterSpacing: 0.3 },
+  guestLink: { color: colors.navy, fontWeight: '700', fontSize: 13, marginTop: 16 },
   avatarSection: { alignItems: 'center', paddingVertical: 32, backgroundColor: colors.surface, marginBottom: 16 },
   avatar: {
     width: 72, height: 72, borderRadius: 36,

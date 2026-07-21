@@ -1,158 +1,230 @@
-// src/app/products/[slug]/page.tsx – Product detail page
+// src/app/products/[slug]/page.tsx – Product detail page (tiered pricing)
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, notFound } from "next/navigation";
+import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { PhotoIcon } from "@heroicons/react/24/outline";
 import { createClient } from "@/lib/supabase/client";
 import { useCartStore } from "@/lib/cart-store";
+import { formatPrice, getDemoProduct } from "@/lib/catalog";
+import {
+  getTiers,
+  getTierForQty,
+  getLineTotal,
+  getLineSavings,
+} from "@/lib/pricing";
 import type { Product } from "@/lib/types";
 
 export default function ProductPage() {
   const params = useParams<{ slug: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(10);
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from("products")
-      .select("*")
-      .eq("slug", params.slug)
-      .single()
-      .then(({ data }) => {
-        setProduct(data);
-        setLoading(false);
-      });
+    let active = true;
+    (async () => {
+      let data: Product | null = null;
+      try {
+        const supabase = createClient();
+        const res = await supabase
+          .from("products")
+          .select("*")
+          .eq("slug", params.slug)
+          .single();
+        data = res.data;
+      } catch {
+        data = null;
+      }
+      if (!active) return;
+      // Fall back to demo data until the Supabase catalog is wired up.
+      setProduct(data ?? getDemoProduct(params.slug));
+      setLoading(false);
+    })();
+    return () => {
+      active = false;
+    };
   }, [params.slug]);
-
-  const formatPrice = (cents: number) =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
-
-  const handleAddToCart = () => {
-    if (!product) return;
-    addItem(product, quantity);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1c51a3]" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-navy" />
       </div>
     );
   }
 
-  if (!product) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-24 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h1>
-        <p className="text-gray-500 mb-8">
-          This product does not exist or has been removed.
-        </p>
-        <Link href="/categories" className="px-6 py-3 bg-[#1c51a3] text-white rounded-lg font-semibold">
-          Back to Categories
-        </Link>
-      </div>
-    );
-  }
+  if (!product) return null;
+
+  const tiers = getTiers(product.price, product.unit);
+  const activeTier = getTierForQty(product.price, product.unit, quantity);
+  const lineTotal = getLineTotal(product.price, product.unit, quantity);
+  const savings = getLineSavings(product.price, product.unit, quantity);
+  const inStock = product.stock > 0;
+
+  const handleAdd = () => {
+    addItem(product, quantity);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1800);
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 mb-8">
-        <Link href="/" className="hover:text-[#1c51a3]">Home</Link>
-        <span className="mx-2">/</span>
-        <Link href="/categories" className="hover:text-[#1c51a3]">Categories</Link>
-        <span className="mx-2">/</span>
-        <span className="text-gray-900 font-medium">{product.name}</span>
-      </nav>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* Breadcrumb + SKU */}
+      <div className="flex items-center justify-between mb-6">
+        <nav className="text-sm text-gray-500">
+          <Link href="/" className="hover:text-navy">
+            Home
+          </Link>
+          <span className="mx-2">/</span>
+          <Link href="/categories" className="hover:text-navy">
+            Catalog
+          </Link>
+        </nav>
+        {product.sku && (
+          <span className="text-xs font-medium text-gray-400 tabular-nums">
+            {product.sku}
+          </span>
+        )}
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Image */}
-        <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100">
-          {product.image_url ? (
-            <Image
-              src={product.image_url}
-              alt={product.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 50vw"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-32 h-32" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={0.75}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0v10a2 2 0 01-2 2H6a2 2 0 01-2-2V7m16 0l-8 4-8-4" />
-              </svg>
-            </div>
-          )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        {/* Photo */}
+        <div>
+          <div className="relative aspect-square border border-dashed border-tint-border bg-tint/60 flex flex-col items-center justify-center gap-2 text-navy overflow-hidden">
+            {product.image_url ? (
+              <Image
+                src={product.image_url}
+                alt={product.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
+            ) : (
+              <>
+                <PhotoIcon className="w-12 h-12 text-navy/40" />
+                <span className="text-sm font-semibold">Product photo</span>
+              </>
+            )}
+          </div>
+          {/* Brand + stock chips */}
+          <div className="flex items-center gap-2 mt-4">
+            {product.brand_code && (
+              <span className="text-[11px] font-bold tracking-wide uppercase text-gray-600 bg-gray-100 border border-gray-200 px-2 py-1">
+                {product.brand_code}
+              </span>
+            )}
+            <span
+              className={`text-[11px] font-bold tracking-wide uppercase px-2 py-1 border ${
+                inStock
+                  ? "text-navy border-tint-border bg-tint"
+                  : "text-red-600 border-red-200 bg-red-50"
+              }`}
+            >
+              {inStock ? "In stock" : "Out of stock"}
+            </span>
+          </div>
         </div>
 
         {/* Details */}
-        <div className="flex flex-col gap-6">
-          <div>
-            <h1 className="text-3xl font-extrabold text-gray-900">{product.name}</h1>
-            <div className="flex items-center gap-3 mt-3">
-              <span className="text-3xl font-bold text-[#1c51a3]">{formatPrice(product.price)}</span>
-              <span className="text-gray-400">/ {product.unit}</span>
-            </div>
-          </div>
-
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl uppercase text-gray-900 leading-tight">
+            {product.name}
+          </h1>
           {product.description && (
-            <p className="text-gray-600 leading-relaxed">{product.description}</p>
+            <p className="mt-3 text-sm text-gray-600 leading-relaxed">
+              {product.description}
+            </p>
           )}
 
-          {/* Stock */}
-          <div className="flex items-center gap-2">
-            <span
-              className={`inline-block w-2.5 h-2.5 rounded-full ${
-                product.stock > 0 ? "bg-green-500" : "bg-red-500"
-              }`}
-            />
-            <span className={`text-sm font-medium ${product.stock > 0 ? "text-green-700" : "text-red-600"}`}>
-              {product.stock > 0 ? `${product.stock} units in stock` : "Out of Stock"}
-            </span>
+          {/* Tiered pricing table */}
+          <div className="mt-6 border border-gray-200">
+            <div className="eyebrow text-gray-500 px-4 py-2.5 border-b border-gray-200 bg-gray-50">
+              Tiered pricing
+            </div>
+            {tiers.map((tier) => {
+              const active = tier.minQty === activeTier.minQty;
+              return (
+                <div
+                  key={tier.minQty}
+                  className={`flex items-center justify-between px-4 py-3 border-b border-gray-100 last:border-b-0 ${
+                    active ? "bg-tint" : ""
+                  }`}
+                >
+                  <span
+                    className={`text-sm ${
+                      active
+                        ? "font-bold text-navy"
+                        : "font-medium text-gray-700"
+                    }`}
+                  >
+                    {tier.label}
+                  </span>
+                  <span
+                    className={`text-sm tabular-nums ${
+                      active ? "font-bold text-navy" : "text-gray-700"
+                    }`}
+                  >
+                    {formatPrice(tier.unitPrice)}
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Quantity + Add to Cart */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+          {/* Savings note */}
+          <p className="mt-3 text-sm text-gray-600">
+            At {quantity} {quantity === 1 ? product.unit : `${product.unit}s`}:{" "}
+            <span className="font-bold text-navy">{formatPrice(lineTotal)}</span>
+            {savings > 0 && (
+              <span className="text-gray-500">
+                {" "}
+                — saving {formatPrice(savings)} vs. single-unit
+              </span>
+            )}
+          </p>
+
+          {/* Quantity + Add */}
+          <div className="mt-6 flex items-stretch gap-3">
+            <div className="flex items-center border border-gray-300">
               <button
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="px-3 py-2 text-lg font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                aria-label="Decrease quantity"
+                className="px-4 text-xl font-bold text-gray-500 hover:bg-gray-100 transition-colors"
               >
                 −
               </button>
-              <span className="px-4 py-2 font-semibold text-gray-900 border-x border-gray-300">
+              <span className="px-5 py-3 font-bold text-gray-900 tabular-nums border-x border-gray-300 min-w-[64px] text-center">
                 {quantity}
               </span>
               <button
-                onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
-                className="px-3 py-2 text-lg font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                onClick={() => setQuantity((q) => q + 1)}
+                aria-label="Increase quantity"
+                className="px-4 text-xl font-bold text-gray-500 hover:bg-gray-100 transition-colors"
               >
                 +
               </button>
             </div>
-
             <button
-              onClick={handleAddToCart}
-              disabled={product.stock === 0}
-              className="flex-1 py-3 px-6 rounded-lg bg-[#1c51a3] text-white font-bold text-lg hover:bg-[#163d7d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              onClick={handleAdd}
+              disabled={!inStock}
+              className="flex-1 bg-navy text-white font-bold hover:bg-navy-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {added ? "✓ Added!" : "Add to Cart"}
+              {added
+                ? "✓ Added"
+                : `Add ${quantity} · ${formatPrice(lineTotal)}`}
             </button>
           </div>
 
           <Link
             href="/cart"
-            className="text-center py-3 px-6 rounded-lg border-2 border-gray-300 text-gray-700 font-semibold hover:border-[#4a7fc4] hover:text-[#1c51a3] transition-colors"
+            className="mt-3 block text-center py-3 border border-gray-300 text-gray-700 font-semibold hover:border-navy hover:text-navy transition-colors"
           >
-            View Cart
+            View cart
           </Link>
         </div>
       </div>

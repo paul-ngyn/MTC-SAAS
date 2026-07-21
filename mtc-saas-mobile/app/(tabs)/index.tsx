@@ -18,32 +18,28 @@ import CategoryCard from '@/components/CategoryCard';
 import ProductRow from '@/components/ProductRow';
 import { colors } from '@/lib/theme';
 import { useCartStore } from '@/lib/cart-store';
+import { DEMO_CATEGORIES, DEMO_PRODUCTS } from '@/lib/catalog';
 import type { Category, Product, Profile } from '@/lib/types';
 
-const DEMO_CATEGORIES: Category[] = [
-  { id: '1', name: 'Kitchen Equipment', slug: 'kitchen-equipment', description: null, image_url: null },
-  { id: '2', name: 'Disposables', slug: 'disposables', description: null, image_url: null },
-  { id: '3', name: 'Smallwares', slug: 'smallwares', description: null, image_url: null },
-  { id: '4', name: 'Refrigeration', slug: 'refrigeration', description: null, image_url: null },
-];
-
+// Home shows the first four categories and a couple of quick-reorder shortcuts.
+const HOME_CATEGORIES = DEMO_CATEGORIES.slice(0, 4);
 const DEMO_REORDER_PRODUCTS: Product[] = [
-  { id: 'demo-1', name: '32 oz Round Container with Lid, Case of 150', slug: 'demo-1', description: null, price: 4299, image_url: null, category_id: '2', stock: 100, unit: 'case', sku: 'TD-C32-150', brand_code: 'TD' },
-  { id: 'demo-2', name: '18" Food Film Wrap, 2000 ft Roll', slug: 'demo-2', description: null, price: 1429, image_url: null, category_id: '2', stock: 60, unit: 'roll', sku: 'MTC-F18-2K', brand_code: 'MTC' },
+  DEMO_PRODUCTS.find((p) => p.slug === 'td-c32-150')!,
+  DEMO_PRODUCTS.find((p) => p.slug === 'mtc-f18-2k')!,
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const itemCount = useCartStore((s) => s.itemCount());
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(HOME_CATEGORIES);
   const [reorderProducts, setReorderProducts] = useState<Product[]>(DEMO_REORDER_PRODUCTS);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [query, setQuery] = useState('');
 
   useEffect(() => {
     supabase.from('categories').select('*').limit(4).then(({ data }) => {
-      setCategories(data && data.length > 0 ? data : DEMO_CATEGORIES);
+      setCategories(data && data.length > 0 ? data : HOME_CATEGORIES);
     });
 
     supabase.auth.getUser().then(async ({ data: { user } }) => {

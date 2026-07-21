@@ -102,22 +102,25 @@ export default function MembershipPage() {
   };
 
   return (
-    <div className="py-16 px-4 max-w-7xl mx-auto">
+    <div className="py-14 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-3">Membership Plans</h1>
-        <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-          Join the MTC Supply Hub and unlock wholesale pricing, bulk discounts, and
-          priority access — built for restaurant supply professionals.
+        <div className="eyebrow text-navy">MTC+ Membership</div>
+        <h1 className="mt-2 font-display text-4xl sm:text-5xl uppercase text-gray-900 leading-[0.95]">
+          Free freight. Deeper tiers.<br className="hidden sm:block" /> Auto-reorder.
+        </h1>
+        <p className="mt-4 text-[15px] text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          Members ship free over $500, unlock an extra pricing tier on every SKU,
+          and can put consumables on a recurring delivery schedule.
         </p>
 
         {/* Billing Toggle */}
-        <div className="inline-flex items-center bg-gray-100 rounded-full p-1 mt-8">
+        <div className="inline-flex items-center border border-gray-300 p-1 mt-8">
           <button
             onClick={() => setBilling("monthly")}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${
+            className={`px-5 py-2 text-sm font-semibold transition-colors ${
               billing === "monthly"
-                ? "bg-white text-gray-900 shadow"
+                ? "bg-navy text-white"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
@@ -125,14 +128,20 @@ export default function MembershipPage() {
           </button>
           <button
             onClick={() => setBilling("yearly")}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${
+            className={`px-5 py-2 text-sm font-semibold transition-colors ${
               billing === "yearly"
-                ? "bg-white text-gray-900 shadow"
+                ? "bg-navy text-white"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
             Yearly
-            <span className="ml-1.5 bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
+            <span
+              className={`ml-1.5 text-xs font-bold px-2 py-0.5 ${
+                billing === "yearly"
+                  ? "bg-white/20 text-white"
+                  : "bg-tint text-navy"
+              }`}
+            >
               Save 20%
             </span>
           </button>
@@ -140,33 +149,35 @@ export default function MembershipPage() {
       </div>
 
       {error && (
-        <div className="max-w-md mx-auto mb-8 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center">
+        <div className="max-w-md mx-auto mb-8 p-4 bg-red-50 border border-red-200 text-red-700 text-sm text-center">
           {error}
         </div>
       )}
 
       {/* Plans Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {PLANS.map((plan) => (
           <div
             key={plan.id}
-            className={`relative rounded-2xl border-2 p-8 flex flex-col ${
+            className={`relative p-8 flex flex-col ${
               plan.highlighted
-                ? "border-[#2561bb] shadow-xl shadow-[#d4e2f5]"
-                : "border-gray-200 shadow-sm"
+                ? "border-2 border-navy shadow-lg"
+                : "border border-gray-200"
             }`}
           >
             {plan.badge && (
-              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#1c51a3] text-white text-xs font-bold px-4 py-1 rounded-full">
+              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-navy text-white text-[11px] font-bold tracking-wide uppercase px-4 py-1">
                 {plan.badge}
               </span>
             )}
 
             <div className="mb-6">
-              <h2 className="text-2xl font-extrabold text-gray-900">{plan.name}</h2>
+              <h2 className="font-display text-2xl uppercase text-gray-900">
+                {plan.name}
+              </h2>
               <p className="text-gray-500 text-sm mt-1">{plan.description}</p>
               <div className="mt-4">
-                <span className="text-4xl font-extrabold text-gray-900">
+                <span className="font-display text-4xl text-navy">
                   {formatPrice(billing === "monthly" ? plan.monthly : plan.yearly)}
                 </span>
                 <span className="text-gray-400 ml-1 text-sm">
@@ -178,7 +189,7 @@ export default function MembershipPage() {
             <ul className="space-y-3 flex-1 mb-8">
               {plan.features.map((feature) => (
                 <li key={feature} className="flex items-start gap-2.5 text-sm text-gray-700">
-                  <CheckIcon className="w-5 h-5 text-[#2561bb] flex-shrink-0 mt-0.5" />
+                  <CheckIcon className="w-5 h-5 text-navy flex-shrink-0 mt-0.5" />
                   {feature}
                 </li>
               ))}
@@ -187,10 +198,10 @@ export default function MembershipPage() {
             <button
               onClick={() => handleSubscribe(plan)}
               disabled={!!loading}
-              className={`w-full py-3 rounded-xl font-bold text-base transition-colors ${
+              className={`w-full py-3 font-bold text-base transition-colors ${
                 plan.highlighted
-                  ? "bg-[#1c51a3] text-white hover:bg-[#163d7d]"
-                  : "bg-gray-100 text-gray-900 hover:bg-gray-200"
+                  ? "bg-navy text-white hover:bg-navy-dark"
+                  : "border border-gray-300 text-gray-900 hover:border-navy hover:text-navy"
               } disabled:opacity-60 disabled:cursor-not-allowed`}
             >
               {loading === plan.id ? "Redirecting…" : `Get ${plan.name}`}

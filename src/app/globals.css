@@ -4,25 +4,44 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111827;
+
+  /* MTC brand palette (matches the mobile app theme) */
+  --navy: #1c51a3;
+  --navy-dark: #0f2454;
+  --tint: #eaf1fb;
+  --tint-border: #bcd3f0;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-navy: var(--navy);
+  --color-navy-dark: var(--navy-dark);
+  --color-tint: var(--tint);
+  --color-tint-border: var(--tint-border);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #ffffff;
-    --foreground: #ffffff;
-  }
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-archivo), var(--font-inter), system-ui, sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Heavy condensed display type for hero + section headings. */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+/* Letter-spaced uppercase eyebrow labels (e.g. "01 · SHOP BY CATEGORY"). */
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
