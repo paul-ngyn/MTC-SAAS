@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -107,6 +108,14 @@ export default function SignUpPage() {
               {error}
             </div>
           )}
+
+          <GoogleSignInButton label="Sign up with Google" />
+
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs font-medium text-gray-400">OR</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
 
           {[
             { id: "fullName", label: "Full Name", type: "text", placeholder: "Jane Smith", autoComplete: "name" },

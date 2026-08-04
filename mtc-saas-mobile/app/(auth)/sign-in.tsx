@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import { supabase } from '@/lib/supabase';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -80,6 +81,14 @@ export default function SignInScreen() {
           )}
         </TouchableOpacity>
 
+        <View style={styles.dividerRow}>
+          <View style={styles.dividerLine} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.dividerLine} />
+        </View>
+
+        <GoogleSignInButton />
+
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account? </Text>
           <Link href="/(auth)/sign-up" asChild>
@@ -126,6 +135,9 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 20, marginBottom: 16, gap: 10 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#e5e7eb' },
+  dividerText: { fontSize: 11, fontWeight: '700', color: '#9ca3af' },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
   footerText: { color: '#6b7280', fontSize: 14 },
   link: { color: '#1c51a3', fontWeight: '600', fontSize: 14 },

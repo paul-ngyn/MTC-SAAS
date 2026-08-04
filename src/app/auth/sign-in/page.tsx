@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { CheckIcon } from "@heroicons/react/24/solid";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 
 type BillingCycle = "monthly" | "yearly";
 
@@ -166,6 +167,14 @@ export default function SignInPage() {
             >
               {loading ? "Signing in…" : "Sign In"}
             </button>
+
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs font-medium text-gray-400">OR</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+
+            <GoogleSignInButton />
           </form>
         </div>
       </div>
