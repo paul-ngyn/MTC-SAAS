@@ -28,6 +28,7 @@ const CHANGELOG: Entry[] = [
       "Added \"My Lists\" — named, quantity-aware saved product lists for one-click reordering. New /lists (index + inline create-list form) and /lists/[id] (editable item table with an \"Add all to cart\" bulk action, wired to the real cart store).",
       "Added a separate /wishlist — a flat set of favorited products (no quantities), reusing the catalog's product card with a remove-from-wishlist heart button.",
       "Set up a web test suite (Jest + React Testing Library, matching mobile's setup) — 65 tests across 9 suites covering pricing.ts, the cart store, the Cart & Checkout page's cart math, freight logic, and checkout payload/error handling, the Account overview/orders/schedules pages, My Lists (creation, editing, add-all-to-cart), and Wishlist. Also fixed a Stripe API-version type error that had resurfaced from a dependency update. `npm test` / `npm run test:watch` / `npm run test:coverage`.",
+      "Made the Navbar's Account button auth-adaptive: shows \"Sign In\" when signed out, \"Account\" when signed in (new useAuthUser hook wraps Supabase's getSession() + onAuthStateChange). The dropdown's left column now switches too — \"Sign in\" / \"Create an account\" when signed out, or My Lists plus a \"Log out\" button (calls supabase.auth.signOut(), then redirects home) when signed in. Added 7 component tests covering both states and the sign-out flow.",
     ],
   },
   {

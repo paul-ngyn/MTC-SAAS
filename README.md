@@ -73,16 +73,19 @@ screenshot). Supabase and Stripe wiring is being redone separately — treat the
 - [x] Expo mobile screens (Home / Browse / Product / Cart) polished + demo-data
       fallbacks so they render in Expo Go before Supabase is wired
 - [x] Cart persistence hydration bug fixed (localStorage vs. SSR mismatch)
-- [x] Navbar "Account" is now a hover dropdown: My Lists (Create a list / My
-      list / Wishlist) on the left, Account sections on the right
+- [x] Navbar "Account" is now a hover dropdown, auth-adaptive: button reads
+      "Sign In" when signed out / "Account" when signed in; left column shows
+      Sign in + Create an account (signed out) or My Lists + Log out (signed
+      in); right column (Account sections) is unchanged either way
 - [x] "My Lists" — named, quantity-aware saved lists for one-click reordering
       (`/lists`, `/lists/[id]`, wired to the real cart)
 - [x] "Wishlist" — a flat favorited-products page (`/wishlist`)
-- [x] Web test suite added (Jest + React Testing Library) — 65 tests across 9
+- [x] Web test suite added (Jest + React Testing Library) — 72 tests across 10
       suites covering `src/lib/pricing.ts`, the cart store, the Cart &
       Checkout page (including the checkout payload/error handling), the
       Account overview/orders/schedules pages, My Lists (index, creation, and
-      detail with add-all-to-cart), and Wishlist. Run with `npm test`.
+      detail with add-all-to-cart), Wishlist, and the auth-adaptive
+      AccountMenu (both signed-in/out states + sign-out). Run with `npm test`.
 
 ### Not yet done
 
