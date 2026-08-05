@@ -3,19 +3,23 @@
 
 import Link from "next/link";
 import { useCartStore } from "@/lib/cart-store";
-import {
-  ShoppingCartIcon,
-  MagnifyingGlassIcon,
-  UserIcon,
-} from "@heroicons/react/24/outline";
+import { ShoppingCartIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ANNOUNCEMENTS, CATEGORIES } from "@/lib/catalog";
+import { ANNOUNCEMENTS } from "@/lib/catalog";
+import AccountMenu from "@/components/AccountMenu";
 
 export default function Navbar() {
   const itemCount = useCartStore((s) => s.itemCount());
+  const hasHydrated = useCartStore((s) => s.hasHydrated);
   const [query, setQuery] = useState("");
   const router = useRouter();
+
+  // The cart persists to localStorage, which doesn't exist during SSR — the
+  // server always renders 0 items. Show the real (possibly nonzero) count
+  // only once the client has rehydrated from storage, so the server- and
+  // client-rendered HTML always agree on the first paint.
+  const displayCount = hasHydrated ? itemCount : 0;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,13 +82,7 @@ export default function Navbar() {
 
             {/* Account + Cart */}
             <div className="flex items-center gap-5 flex-shrink-0 ml-auto">
-              <Link
-                href="/auth/sign-in"
-                className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-navy transition-colors"
-              >
-                <UserIcon className="w-5 h-5" />
-                <span className="hidden sm:inline">Account</span>
-              </Link>
+              <AccountMenu />
               <Link
                 href="/cart"
                 className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-navy transition-colors"
@@ -92,7 +90,7 @@ export default function Navbar() {
                 <ShoppingCartIcon className="w-5 h-5" />
                 <span className="hidden sm:inline">Cart</span>
                 <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1 rounded bg-navy text-white text-xs font-bold">
-                  {itemCount > 99 ? "99+" : itemCount}
+                  {displayCount > 99 ? "99+" : displayCount}
                 </span>
               </Link>
             </div>
@@ -100,28 +98,25 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* ── Category nav row ── */}
+      {/* ── Nav row — category browsing lives in the Catalog page's sidebar ── */}
       <nav className="border-b border-gray-200 hidden md:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-7 h-12 text-[13px] font-semibold tracking-wide uppercase">
-            {CATEGORIES.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/categories/${cat.slug}`}
-                className="text-gray-600 hover:text-navy transition-colors whitespace-nowrap"
-              >
-                {cat.name}
-              </Link>
-            ))}
+            <Link
+              href="/categories"
+              className="text-gray-600 hover:text-navy transition-colors"
+            >
+              Catalog
+            </Link>
             <Link
               href="/brands"
-              className="ml-auto text-gray-600 hover:text-navy transition-colors"
+              className="text-gray-600 hover:text-navy transition-colors"
             >
               Brands
             </Link>
             <Link
               href="/membership"
-              className="text-navy hover:text-navy-dark transition-colors"
+              className="ml-auto text-navy hover:text-navy-dark transition-colors"
             >
               MTC+ Membership
             </Link>

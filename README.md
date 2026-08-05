@@ -55,13 +55,88 @@ Design is being aligned to the approved mockups (web hub PDF + mobile
 screenshot). Supabase and Stripe wiring is being redone separately — treat the
 `.env.local` keys and `src/lib/{supabase,stripe}` clients as scaffolding for now.
 
-- [x] Web hub homepage rebuilt to match the design (hero, categories, brands,
-      top movers, MTC+ CTA, footer)
-- [x] Web product detail page — tiered pricing table + quantity stepper
-- [x] Web categories, cart, and membership pages restyled to match
+### Done
+
+- [x] Web hub homepage (hero, categories, brands, top movers, MTC+ CTA, footer)
+- [x] Web catalog page (`/categories`) — sidebar filters (category + brand),
+      product grid with per-product tiered pricing, brand deep-links
+- [x] Web brands directory (`/brands`)
+- [x] Web account section — `/account` is an overview hub (cards linking to
+      each section with a teaser stat); one dedicated page per section
+      (`/account/orders`, `/account/schedules`, `/account/addresses`,
+      `/account/payment`, `/account/tax-exempt`, `/account/users`), all
+      sharing a common sidebar layout
+- [x] Web product detail page — tiered pricing table, MTC+ member tier row,
+      quantity stepper, specifications table
+- [x] Web cart merged with checkout into one Cart & Checkout page
+- [x] Web membership page restyled to match
 - [x] Expo mobile screens (Home / Browse / Product / Cart) polished + demo-data
       fallbacks so they render in Expo Go before Supabase is wired
-- [ ] Re-wire Supabase (auth + catalog) and Stripe (checkout + membership)
+- [x] Cart persistence hydration bug fixed (localStorage vs. SSR mismatch)
+- [x] Navbar "Account" is now a hover dropdown: My Lists (Create a list / My
+      list / Wishlist) on the left, Account sections on the right
+- [x] "My Lists" — named, quantity-aware saved lists for one-click reordering
+      (`/lists`, `/lists/[id]`, wired to the real cart)
+- [x] "Wishlist" — a flat favorited-products page (`/wishlist`)
+- [x] Web test suite added (Jest + React Testing Library) — 65 tests across 9
+      suites covering `src/lib/pricing.ts`, the cart store, the Cart &
+      Checkout page (including the checkout payload/error handling), the
+      Account overview/orders/schedules pages, My Lists (index, creation, and
+      detail with add-all-to-cart), and Wishlist. Run with `npm test`.
+
+### Not yet done
+
+**Content — real catalog data**
+- [ ] Generate/import the real product catalog (the ~1,600 SKUs implied by
+      the homepage stat) — everything today is ~12 hand-written demo products
+      in `src/lib/catalog.ts` / `mtc-saas-mobile/lib/catalog.ts`
+- [ ] Real product photography — every photo slot is a placeholder dropzone
+      (`public/` has no product images at all yet)
+- [ ] Populate the Supabase `categories` / `products` tables from that catalog
+      once generated (schema already exists in `supabase/schema.sql`)
+
+**Backend wiring**
+- [ ] Confirm the Supabase project is resumed/reachable — it did not respond
+      to a REST request during this session (likely paused from inactivity;
+      there's already a keep-alive script at `scripts/supabase-keep-alive.js`,
+      confirm its scheduled workflow is actually running)
+- [ ] Re-wire Supabase auth (sign-in/sign-up already call it — verify end to
+      end once the project is reachable) and catalog reads across all pages
+      that currently fall back to demo data
+- [ ] End-to-end test the Stripe checkout + membership subscribe flow with a
+      live (non-paused) Supabase project, since `/api/checkout` and
+      `/api/subscribe` both look up live prices/customers there
+- [ ] Add new Supabase tables for the Account section's new modules —
+      addresses, payment methods/Net-30 terms, tax-exempt certificates, users
+      & approval limits, auto-reorder schedules — none of these exist in
+      `supabase/schema.sql` yet, only `profiles/categories/products/orders/order_items`
+
+**Design gaps — pages not yet touched by the redesign**
+- [ ] `/search` — still the old un-restyled UI (hardcoded hex colors, no
+      Archivo/navy tokens) and has no demo-data fallback, so it shows "0
+      results" until Supabase is reachable
+- [ ] `/auth/sign-in`, `/auth/sign-up` — functional (Google sign-in wired) but
+      still old styling
+- [ ] `/checkout/success`, `/membership/success` — still old styling
+
+**Functionality — demo buttons that don't do anything yet**
+- [ ] Account: "Add a SKU →" (schedules), "+ Add address", "Update" (payment),
+      "Upload certificate →", "Invite user →", "Reorder" (order history), and
+      the Edit buttons on addresses/schedules are all display-only placeholders
+- [ ] Catalog/Brands: nothing missing here — Add-to-cart and brand filters are
+      fully wired to real state
+
+**Mobile parity**
+- [ ] Mobile has no Brands directory screen, no expanded Account sub-sections
+      (addresses/payment/tax-exempt/users), and no My Lists / Wishlist —
+      decide whether those are web-only or should be mirrored on mobile too
+
+**"My Lists" / Wishlist follow-ups**
+- [ ] Created lists (via "+ Create new list") only live in component state —
+      they vanish on refresh; same for wishlist removals. Needs real
+      persistence (Supabase table) once the backend is wired
+- [ ] Wishlist has no "add to wishlist" entry point yet (no heart icon on
+      product cards/detail pages) — only removal from `/wishlist` itself works
 
 ### Guest browsing (temporary)
 

@@ -13,9 +13,9 @@ const COLUMNS: { title: string; links: { label: string; href: string; muted?: bo
   {
     title: "Account",
     links: [
-      { label: "Orders", href: "/orders" },
+      { label: "Orders", href: "/account/orders" },
       { label: "Cart", href: "/cart" },
-      { label: "Tax-exempt program", href: "/tax-exempt" },
+      { label: "Tax-exempt program", href: "/account/tax-exempt" },
     ],
   },
   {

@@ -3,6 +3,7 @@ import { Inter, Archivo } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import CartHydration from "@/components/CartHydration";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 // Heavy condensed grotesque used for the display headings + logo.
@@ -26,6 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${archivo.variable}`}>
       <body className="font-sans antialiased bg-white min-h-screen flex flex-col text-[#111827]">
+        <CartHydration />
         <Navbar />
         <main className="flex-1">{children}</main>
         <Footer />

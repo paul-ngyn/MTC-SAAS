@@ -7,6 +7,13 @@ import type { CartItem, Product } from "./types";
 
 type CartStore = {
   items: CartItem[];
+  // localStorage doesn't exist during SSR, so the store always starts as
+  // `items: []` there. This flips to true once the client has finished
+  // reading persisted state — components that render different DOM based on
+  // cart contents (e.g. empty-cart vs. cart-with-items) should treat the
+  // store as empty until this is true, or the server- and client-rendered
+  // HTML can disagree and React throws a hydration error.
+  hasHydrated: boolean;
   addItem: (product: Product, quantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
@@ -19,6 +26,7 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      hasHydrated: false,
 
       addItem: (product, quantity = 1) =>
         set((state) => {
@@ -63,6 +71,20 @@ export const useCartStore = create<CartStore>()(
       itemCount: () =>
         get().items.reduce((sum, i) => sum + i.quantity, 0),
     }),
-    { name: "mtc-cart" }
+    {
+      name: "mtc-cart",
+      // With a synchronous storage like localStorage, persist's default
+      // behavior is to rehydrate at store-creation time — synchronously,
+      // before any component has rendered. That means `hasHydrated` would
+      // already be true on the very first client render, defeating its
+      // purpose. skipHydration defers that to an explicit call (see
+      // CartHydration.tsx), which runs from a useEffect — guaranteed to fire
+      // after the client's first render has already committed and matched
+      // the server's HTML.
+      skipHydration: true,
+      onRehydrateStorage: () => () => {
+        useCartStore.setState({ hasHydrated: true });
+      },
+    }
   )
 );

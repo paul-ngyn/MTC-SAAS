@@ -1,5 +1,7 @@
 // src/lib/types.ts – shared domain types used across the app
 
+import type { TierBreak } from "@/lib/pricing";
+
 export type Category = {
   id: string;
   name: string;
@@ -21,6 +23,9 @@ export type Product = {
   sku?: string; // e.g. "TD-C32-150"
   brand_code?: string; // e.g. "TD", "MB", "HD"
   bulk_price?: number; // lowest tier "bulk from" price, in cents
+  tierBreaks?: TierBreak[]; // custom pricing tiers; falls back to case-quantity default
+  shipsInDays?: number; // 0 = "Ships today"
+  specs?: Record<string, string>; // specification table rows
 };
 
 export type CartItem = {
