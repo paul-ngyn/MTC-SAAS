@@ -13,7 +13,8 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/lib/supabase';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 
@@ -59,6 +60,14 @@ export default function SignUpScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.inner} keyboardShouldPersistTaps="handled">
+        <TouchableOpacity
+          style={styles.backButton}
+          hitSlop={10}
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+        >
+          <Ionicons name="chevron-back" size={26} color="#1c51a3" />
+        </TouchableOpacity>
+
         {/* Brand */}
         <View style={styles.brand}>
           <Text style={styles.brandName}>MTC</Text>
@@ -144,6 +153,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 40,
   },
+  backButton: { alignSelf: 'flex-start', marginBottom: 12, marginLeft: -6, padding: 6 },
   brand: { flexDirection: 'row', alignItems: 'baseline', marginBottom: 32 },
   brandName: { fontSize: 32, fontWeight: '900', color: '#1c51a3', marginRight: 6 },
   brandSub: { fontSize: 16, fontWeight: '500', color: '#6b7280' },

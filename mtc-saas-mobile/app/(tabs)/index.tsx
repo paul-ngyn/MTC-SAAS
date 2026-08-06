@@ -25,7 +25,7 @@ import type { Category, Product, Profile } from '@/lib/types';
 const HOME_CATEGORIES = DEMO_CATEGORIES.slice(0, 4);
 const DEMO_REORDER_PRODUCTS: Product[] = [
   DEMO_PRODUCTS.find((p) => p.slug === 'td-c32-150')!,
-  DEMO_PRODUCTS.find((p) => p.slug === 'mtc-f18-2k')!,
+  DEMO_PRODUCTS.find((p) => p.slug === 'mtc-w18')!,
 ];
 
 export default function HomeScreen() {
@@ -121,7 +121,7 @@ export default function HomeScreen() {
           {isMember ? 'MTC+ MEMBER' : 'GO MTC+'}
         </Text>
         <Text style={[styles.memberTitle, !isMember && styles.memberTitleUpsell]}>
-          {isMember ? 'Free freight over $250 — Active' : 'Unlock free freight & tiered pricing'}
+          {isMember ? 'Free freight over $500 — Active' : 'Unlock free freight & tiered pricing'}
         </Text>
       </TouchableOpacity>
 

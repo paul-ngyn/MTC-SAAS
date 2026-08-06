@@ -105,7 +105,7 @@ export default function HomePage() {
                 key={b.code}
                 className="border border-white/20 p-3 min-h-[128px] flex flex-col"
               >
-                <div className="font-display text-xl">{b.code}</div>
+                <div className="brand-code text-xl">{b.code}</div>
                 <div className="mt-auto pt-3 text-[11px] leading-snug text-white/60 uppercase tracking-wide">
                   {b.blurb}
                 </div>

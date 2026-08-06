@@ -22,10 +22,12 @@ const TIER_LABEL: Record<string, string> = {
   enterprise: 'Enterprise',
 };
 
+// Ids match the shared catalog (see lib/catalog.ts) so a schedule created here
+// points at the same product the web app would resolve.
 const REORDER_CANDIDATES: Pick<Product, 'id' | 'name' | 'unit'>[] = [
-  { id: 'demo-1', name: '32 oz Round Container, Case of 150', unit: 'case' },
-  { id: 'demo-2', name: '18" Food Film Wrap, 2000 ft Roll', unit: 'roll' },
-  { id: 'demo-3', name: 'Degreaser 5 gal', unit: 'pail' },
+  { id: 'td-c32-150', name: '32 oz Round Container, Case of 150', unit: 'case' },
+  { id: 'mtc-w18', name: '18" Food Film Wrap, 2000 ft Roll', unit: 'roll' },
+  { id: 'mtc-deg5', name: 'Degreaser Concentrate, 5 gal Pail', unit: 'pail' },
 ];
 const CADENCES: Cadence[] = ['weekly', 'biweekly', 'monthly'];
 
@@ -184,7 +186,7 @@ export default function AccountScreen() {
             </View>
             <View style={styles.stat}>
               <Text style={styles.statValue}>Free</Text>
-              <Text style={styles.statLabel}>Freight over $250</Text>
+              <Text style={styles.statLabel}>Freight over $500</Text>
             </View>
             <View style={styles.stat}>
               <Text style={styles.statValue}>{schedules.length}</Text>
@@ -275,6 +277,45 @@ export default function AccountScreen() {
         <View style={styles.cardDivider} />
         <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/(tabs)/cart')}>
           <Text style={styles.actionText}>My Cart</Text>
+          <Text style={styles.actionChevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.cardDivider} />
+        <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/lists/index')}>
+          <Text style={styles.actionText}>My Lists</Text>
+          <Text style={styles.actionChevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.cardDivider} />
+        <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/wishlist')}>
+          <Text style={styles.actionText}>Wishlist</Text>
+          <Text style={styles.actionChevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.cardDivider} />
+        <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/brands')}>
+          <Text style={styles.actionText}>Brands Directory</Text>
+          <Text style={styles.actionChevron}>›</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Business account */}
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>Business account</Text>
+        <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/account/addresses')}>
+          <Text style={styles.actionText}>Addresses</Text>
+          <Text style={styles.actionChevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.cardDivider} />
+        <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/account/payment')}>
+          <Text style={styles.actionText}>Payment &amp; Net-30 Terms</Text>
+          <Text style={styles.actionChevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.cardDivider} />
+        <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/account/tax-exempt')}>
+          <Text style={styles.actionText}>Tax-Exempt Certificates</Text>
+          <Text style={styles.actionChevron}>›</Text>
+        </TouchableOpacity>
+        <View style={styles.cardDivider} />
+        <TouchableOpacity style={styles.actionRow} onPress={() => router.push('/account/users')}>
+          <Text style={styles.actionText}>Users &amp; Approvals</Text>
           <Text style={styles.actionChevron}>›</Text>
         </TouchableOpacity>
       </View>

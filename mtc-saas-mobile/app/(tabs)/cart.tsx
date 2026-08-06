@@ -18,10 +18,10 @@ import { useCartStore } from '@/lib/cart-store';
 import { memo, useMemo, useState } from 'react';
 import { colors } from '@/lib/theme';
 import { getEffectiveUnitPrice, getLineTotal, getLineSavings, getNextTier } from '@/lib/pricing';
+import { FREE_FREIGHT_THRESHOLD, FLAT_FREIGHT } from '@/lib/catalog';
 import type { CartItem } from '@/lib/types';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000';
-const FREE_FREIGHT_THRESHOLD = 25000; // $250, matches the MTC+ member banner
 
 function formatPrice(cents: number) {
   return `$${(cents / 100).toFixed(2)}`;
@@ -95,7 +95,8 @@ export default function CartScreen() {
   );
   const bulkSavings = listSubtotal - tieredTotal;
   const freightFree = tieredTotal >= FREE_FREIGHT_THRESHOLD;
-  const total = tieredTotal; // freight calculated at checkout when not free
+  const freight = freightFree ? 0 : FLAT_FREIGHT;
+  const total = tieredTotal + freight;
 
   const handleCheckout = async () => {
     setLoading(true);
@@ -182,7 +183,7 @@ export default function CartScreen() {
             )}
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Freight</Text>
-              <Text style={styles.summaryValue}>{freightFree ? 'Free' : 'At checkout'}</Text>
+              <Text style={styles.summaryValue}>{freightFree ? 'Free' : formatPrice(freight)}</Text>
             </View>
             <View style={[styles.summaryRow, styles.totalRow]}>
               <Text style={styles.totalLabel}>Total</Text>

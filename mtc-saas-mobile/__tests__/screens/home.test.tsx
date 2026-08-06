@@ -94,7 +94,7 @@ describe('Home screen', () => {
     await render(<HomeScreen />);
 
     await waitFor(() => expect(screen.getByText('MTC+ MEMBER')).toBeTruthy());
-    expect(screen.getByText('Free freight over $250 — Active')).toBeTruthy();
+    expect(screen.getByText('Free freight over $500 — Active')).toBeTruthy();
   });
 
   it('reorder shortcuts fall back to the demo products when there is no order history', async () => {

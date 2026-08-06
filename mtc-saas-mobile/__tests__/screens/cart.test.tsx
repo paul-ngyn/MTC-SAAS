@@ -59,8 +59,11 @@ describe('Cart screen', () => {
   it('shows list-price subtotal and no bulk savings below the discount threshold', async () => {
     useCartStore.getState().addItem(mockProduct, 5); // below the 10-unit tier
     await render(<CartScreen />);
-    // No discount applies, so the line total, cart subtotal, and grand total all match.
-    expect(screen.getAllByText('$214.95')).toHaveLength(3); // 5 × $42.99
+    // No discount applies, so the line total and cart subtotal match...
+    expect(screen.getAllByText('$214.95')).toHaveLength(2); // 5 × $42.99
+    // ...and the grand total adds flat freight, since $214.95 is under the $500
+    // free-freight threshold.
+    expect(screen.getByText('$239.94')).toBeTruthy(); // $214.95 + $24.99
     expect(screen.queryByText('Bulk-tier savings')).toBeNull();
   });
 
@@ -68,22 +71,27 @@ describe('Cart screen', () => {
     useCartStore.getState().addItem(mockProduct, 10); // hits the 10-49 tier (10% off)
     await render(<CartScreen />);
 
-    // Tiered line total: 10 × $38.69 = $386.90 (line-item total + cart total, same for a single item)
-    expect(screen.getAllByText('$386.90')).toHaveLength(2);
+    // Tiered line total: 10 × $38.69 = $386.90
+    expect(screen.getByText('$386.90')).toBeTruthy();
     expect(screen.getByText('Bulk-tier savings')).toBeTruthy();
     // Savings: (4299 - 3869) * 10 = 4300 cents = $43.00
     expect(screen.getByText('−$43.00')).toBeTruthy();
+    // Still under $500, so freight is added: $386.90 + $24.99
+    expect(screen.getByText('$411.89')).toBeTruthy();
   });
 
-  it('marks freight free once the tiered total clears $250', async () => {
-    useCartStore.getState().addItem(mockProduct, 10); // tiered total $386.90 > $250
+  it('marks freight free once the tiered total clears $500', async () => {
+    useCartStore.getState().addItem(mockProduct, 15); // tiered total $580.35 > $500
     await render(<CartScreen />);
     expect(screen.getByText('Free')).toBeTruthy();
+    // Freight is waived, so the grand total equals the tiered line total —
+    // hence the same figure renders twice (line item + total row).
+    expect(screen.getAllByText('$580.35')).toHaveLength(2);
   });
 
-  it('shows "At checkout" for freight below the free-shipping threshold', async () => {
-    useCartStore.getState().addItem(mockProduct, 2); // tiered total $85.98 < $250
+  it('charges flat freight below the free-shipping threshold', async () => {
+    useCartStore.getState().addItem(mockProduct, 2); // tiered total $85.98 < $500
     await render(<CartScreen />);
-    expect(screen.getByText('At checkout')).toBeTruthy();
+    expect(screen.getByText('$24.99')).toBeTruthy();
   });
 });

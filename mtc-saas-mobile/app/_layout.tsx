@@ -62,6 +62,38 @@ export default function RootLayout() {
             name="membership"
             options={{ title: 'Membership Plans', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
           />
+          <Stack.Screen
+            name="brands"
+            options={{ title: 'Brands Directory', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
+          />
+          <Stack.Screen
+            name="wishlist"
+            options={{ title: 'Wishlist', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
+          />
+          <Stack.Screen
+            name="lists/index"
+            options={{ title: 'My Lists', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
+          />
+          <Stack.Screen
+            name="lists/[id]"
+            options={{ title: 'List', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
+          />
+          <Stack.Screen
+            name="account/addresses"
+            options={{ title: 'Addresses', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
+          />
+          <Stack.Screen
+            name="account/payment"
+            options={{ title: 'Payment & Net-30', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
+          />
+          <Stack.Screen
+            name="account/tax-exempt"
+            options={{ title: 'Tax-Exempt Certificates', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
+          />
+          <Stack.Screen
+            name="account/users"
+            options={{ title: 'Users & Approvals', headerBackTitle: 'Back', headerLeft: () => <HeaderBackButton /> }}
+          />
         </Stack>
       </GestureHandlerRootView>
     </SafeAreaProvider>

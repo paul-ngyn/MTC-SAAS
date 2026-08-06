@@ -49,6 +49,15 @@ npm start            # scan the QR code with Expo Go
 npm test             # jest suite
 ```
 
+See [`mtc-saas-mobile/README.md`](mtc-saas-mobile/README.md) for the in-depth
+mobile guide — architecture, how mobile reaches Stripe through the web app's API
+routes, the web/mobile parity matrix, and the prioritized mobile TODO.
+
+> Checkout and membership on mobile POST to the **web app's** `/api/checkout`
+> and `/api/subscribe`, so run the web app too when testing those — and point
+> `EXPO_PUBLIC_API_URL` at a host the device can actually reach (`localhost`
+> won't resolve from a phone).
+
 ## Status & roadmap
 
 Design is being aligned to the approved mockups (web hub PDF + mobile
@@ -72,6 +81,24 @@ screenshot). Supabase and Stripe wiring is being redone separately — treat the
 - [x] Web membership page restyled to match
 - [x] Expo mobile screens (Home / Browse / Product / Cart) polished + demo-data
       fallbacks so they render in Expo Go before Supabase is wired
+- [x] Mobile screen-level parity with web — added the Brands directory,
+      My Lists (index + detail with add-all-to-cart), Wishlist, and the four
+      Account sub-sections (addresses, payment/Net-30, tax-exempt, users),
+      all registered as stack screens and linked from the Account tab
+- [x] Mobile auth polish — back button on sign-in/sign-up (the auth group runs
+      `headerShown: false`, so it's an in-body control) and the real
+      multi-color Google mark via `react-native-svg` instead of a blue "G"
+- [x] Web/mobile catalog reconciled — the two demo catalogs had drifted (same
+      products under different ids: `imp-ir-6`/`im-r6`, `mtc-w18`/`mtc-f18-2k`,
+      `mtc-k9-200`/`td-k9-200`, plus `mtc-b500` filed under a different
+      category). `mtc-saas-mobile/lib/catalog.ts` now mirrors the web's
+      `ALL_PRODUCTS` exactly — same 12 ids, slugs, names, prices, units, and
+      categories — so a cart or saved list resolves on either platform
+- [x] Free-freight threshold unified at **$500** (the web hub PDF's number, and
+      what the web announcement copy already said; the mobile mockup's $250 was
+      dropped). Mobile now also itemizes `FLAT_FREIGHT` ($24.99) instead of
+      showing "At checkout", so its displayed Total is the real charge.
+      Both constants live in each app's `catalog.ts`
 - [x] Cart persistence hydration bug fixed (localStorage vs. SSR mismatch)
 - [x] Navbar "Account" is now a hover dropdown, auth-adaptive: button reads
       "Sign In" when signed out / "Account" when signed in; left column shows
@@ -129,10 +156,26 @@ screenshot). Supabase and Stripe wiring is being redone separately — treat the
 - [ ] Catalog/Brands: nothing missing here — Add-to-cart and brand filters are
       fully wired to real state
 
-**Mobile parity**
-- [ ] Mobile has no Brands directory screen, no expanded Account sub-sections
-      (addresses/payment/tax-exempt/users), and no My Lists / Wishlist —
-      decide whether those are web-only or should be mirrored on mobile too
+**Mobile parity** — see [`mtc-saas-mobile/README.md`](mtc-saas-mobile/README.md)
+for the in-depth mobile guide (architecture, parity matrix, full TODO). The
+screen-level gap is now closed; what remains:
+
+- [ ] **Pricing engines have diverged and will produce different prices.**
+      `src/lib/pricing.ts` accepts an optional `customBreaks?: TierBreak[]` on
+      every function (so a product can override the default 1-9/10-49/50+
+      schedule via `product.tierBreaks`) and exposes `getMemberPrice()`.
+      `mtc-saas-mobile/lib/pricing.ts` has neither. Nothing breaks today only
+      because no demo product sets `tierBreaks` — the moment real catalog data
+      carries per-product tiers, the same SKU costs a different amount on each
+      platform. Port `customBreaks` + `getMemberPrice()` to mobile and add the
+      MTC+ member-price row to the mobile product page
+- [ ] `search.tsx` and `orders.tsx` are the only mobile screens without a
+      demo-data fallback, so they show empty until Supabase is reachable
+- [ ] Mobile Brands "Shop {CODE} →" routes to the generic category grid; web
+      deep-links to `/categories?brand=CODE`. Needs a brand param on the mobile
+      catalog route
+- [ ] Mobile-only opportunities not started: push notifications (order shipped,
+      schedule due), pull-to-refresh, offline handling
 
 **"My Lists" / Wishlist follow-ups**
 - [ ] Created lists (via "+ Create new list") only live in component state —
@@ -148,10 +191,6 @@ Product / Cart) is browsable **without** signing in — matching the public web
 hub. Sign-in is only required for the Account tab and checkout. See
 `mtc-saas-mobile/app/_layout.tsx`; when auth is ready, decide whether to keep
 guest browsing or restore a login requirement.
-
-> **Note:** the free-freight threshold differs between the two mockups — the web
-> hub PDF says **$500**, the mobile screenshot banner says **$250**. The code
-> currently follows each design (web `$500`, mobile `$250`); unify once decided.
 
 ## Environment
 
