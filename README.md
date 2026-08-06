@@ -141,6 +141,23 @@ screenshot). Supabase and Stripe wiring is being redone separately — treat the
       & approval limits, auto-reorder schedules — none of these exist in
       `supabase/schema.sql` yet, only `profiles/categories/products/orders/order_items`
 
+**Admin dashboard** — none exists yet (no `/admin` route, no `role`/`is_admin`
+concept anywhere in `supabase/schema.sql`). Needed eventually so MTC staff can
+manage the catalog, fulfill orders, and verify tax-exempt certs without a
+direct DB edit — but sequence it *after* the real catalog import and Supabase
+wiring above, or it gets built twice against demo data. When it's time, scope
+v1 to the placeholders that already exist and do nothing, rather than the
+full catalog editor:
+- [ ] `is_admin` flag (or a `role` column) on `profiles` + matching RLS
+      policies gating admin-only reads/writes
+- [ ] Order status updates — currently no way to move an order past
+      "pending" from anywhere
+- [ ] Tax-exempt certificate review/approval — replaces the "Upload
+      certificate →" placeholder's missing other half
+- [ ] User & approval-limit management — replaces "Invite user →"
+- [ ] Catalog editing (add/edit products, prices, stock) can stay a direct
+      Supabase-table edit for longer before it needs its own UI
+
 **Design gaps — pages not yet touched by the redesign**
 - [ ] `/search` — still the old un-restyled UI (hardcoded hex colors, no
       Archivo/navy tokens) and has no demo-data fallback, so it shows "0
